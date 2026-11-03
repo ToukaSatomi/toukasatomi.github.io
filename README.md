@@ -1,2 +1,2 @@
-# satomitouka.github.io
+# toukasatomi.github.io
 Mew Mew Kissy Cutie
