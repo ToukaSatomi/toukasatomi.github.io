@@ -1,1 +1,999 @@
-Welcome to TM_Sharweek's site
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TM_Sharweek | 个人博客主页</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+  <!-- 1. 左上角隐蔽按钮 (平时半透明毛玻璃隐蔽，悬停或聚焦时显现) -->
+  <button
+    type="button"
+    id="stealthSidebarBtn"
+    class="stealth-trigger"
+    aria-label="打开侧边栏查看友链与联系方式"
+    title="友链与联系方式 (快捷键: M)"
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="4" y1="7" x2="20" y2="7"></line>
+      <line x1="4" y1="12" x2="14" y2="12"></line>
+      <line x1="4" y1="17" x2="18" y2="17"></line>
+    </svg>
+  </button>
+
+  <!-- 2. 侧边栏遮罩与毛玻璃抽屉 (查看友链与联系方式等) -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop" aria-hidden="true"></div>
+
+  <aside id="sidebarDrawer" class="sidebar-drawer" aria-label="个人信息与友链侧边栏">
+    <div class="sidebar-header">
+      <div class="author-badge">
+        <div class="author-avatar">TM</div>
+        <div class="author-meta">
+          <h2>TM_Sharweek</h2>
+          <p>Code · Literature · Indie Games</p>
+        </div>
+      </div>
+      <button type="button" id="closeSidebarBtn" class="sidebar-close-btn" aria-label="关闭侧边栏">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="sidebar-body">
+      <!-- 个人简介 -->
+      <div>
+        <div class="sidebar-section-title">关于博主</div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
+          欢迎来到 <strong>TM_Sharweek</strong> 的个人空间。
+        </p>
+      </div>
+
+      <!-- 联系方式 (配置时可在下方修改或增删) -->
+      <div>
+        <div class="sidebar-section-title">联系方式 / Links</div>
+        <div class="contact-list">
+          <a class="contact-item" href="https://www.cnblogs.com/sharweek" target="_blank" rel="noopener noreferrer">
+            <span class="contact-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              博客园 (CnBlogs)
+            </span>
+            <span class="contact-value">@sharweek</span>
+          </a>
+
+          <a class="contact-item" href="https://github.com/sharweek" target="_blank" rel="noopener noreferrer">
+            <span class="contact-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+              GitHub 主页
+            </span>
+            <span class="contact-value">github.com</span>
+          </a>
+
+          <button type="button" class="contact-item" id="copyEmailBtn" data-email="sharweek@example.com">
+            <span class="contact-label">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              电子邮箱 (点击复制)
+            </span>
+            <span class="contact-value">sharweek@example.com</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 友情链接 (可在 JS BLOG_CONFIG.friends 中直接编辑) -->
+      <div>
+        <div class="sidebar-section-title">友情链接 / Friends</div>
+        <div id="friendLinksContainer" class="friend-links-grid"></div>
+      </div>
+
+      <!-- 背景图权重池状态展示 -->
+      <div>
+        <div class="sidebar-section-title">背景图权重池 / Backgrounds</div>
+        <div id="bgWeightListContainer" class="bg-weight-list"></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 3. 页面居中主体：用毛玻璃大外框 (.glass-main-frame) 框起 -->
+  <main class="main-stage">
+    <div class="glass-main-frame">
+      <!-- 顶部居中大字 TM_Sharweek 与随机句子 -->
+      <header class="hero-header">
+        <div class="top-pill-row">
+          <div class="status-pill">
+            <span class="status-dot"></span>
+            <span>DAY MODE · FROSTED GLASS</span>
+          </div>
+          <button
+            type="button"
+            id="randomBgBtn"
+            class="bg-random-pill"
+            title="点击按照设定权重随机抽取一张背景图片"
+          >
+            <span>🎲 背景:</span>
+            <span id="currentBgLabel">按权重随机加载中...</span>
+          </button>
+        </div>
+
+        <h1 class="blog-title">
+          <span class="tm-prefix">TM_</span>Sharweek
+        </h1>
+
+        <div class="quote-wrapper">
+          <button
+            type="button"
+            id="randomQuoteBtn"
+            class="quote-box"
+            title="点击随机切换下一句"
+          >
+            <span id="randomQuoteText" class="quote-text">正在加载随机句子...</span>
+            <span class="quote-refresh-icon" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M16 16h5v5"/>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </header>
+
+      <!-- 4. 下方居中四个毛玻璃大按钮分区 -->
+      <section id="portalGridSection" class="portal-grid" aria-label="博客四大分区导航">
+        <!-- 分区 1：技术博客 -->
+        <a
+          href="#/tech"
+          class="portal-card card-tech"
+          data-section="tech"
+          data-target-url="./tech/index.html"
+        >
+          <div class="portal-card-top">
+            <div class="portal-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+            </div>
+            <span class="portal-tag">/tech/*</span>
+          </div>
+          <div>
+            <div class="portal-title">
+              <span>技术博客</span>
+              <span class="portal-arrow">→</span>
+            </div>
+            <p class="portal-desc">算法笔记、工程实践与技术专题归纳。</p>
+          </div>
+        </a>
+
+        <!-- 分区 2：文学作品 -->
+        <a
+          href="#/literature"
+          class="portal-card card-lit"
+          data-section="literature"
+          data-target-url="./literature/index.html"
+        >
+          <div class="portal-card-top">
+            <div class="portal-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+                <path d="M2 2l7.586 7.586"></path>
+                <circle cx="11" cy="11" r="2"></circle>
+              </svg>
+            </div>
+            <span class="portal-tag">/literature/*</span>
+          </div>
+          <div>
+            <div class="portal-title">
+              <span>文学作品</span>
+              <span class="portal-arrow">→</span>
+            </div>
+            <p class="portal-desc">随笔、短篇故事与个人文字创作归档。</p>
+          </div>
+        </a>
+
+        <!-- 分区 3：迷你游戏 -->
+        <a
+          href="#/games"
+          class="portal-card card-game"
+          data-section="games"
+          data-target-url="./games/index.html"
+        >
+          <div class="portal-card-top">
+            <div class="portal-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="6" y1="12" x2="10" y2="12"></line>
+                <line x1="8" y1="10" x2="8" y2="14"></line>
+                <line x1="15" y1="13" x2="15.01" y2="13"></line>
+                <line x1="18" y1="11" x2="18.01" y2="11"></line>
+                <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+              </svg>
+            </div>
+            <span class="portal-tag">/games/*</span>
+          </div>
+          <div>
+            <div class="portal-title">
+              <span>迷你游戏</span>
+              <span class="portal-arrow">→</span>
+            </div>
+            <p class="portal-desc">纯网页端轻量级互动小游戏合集。</p>
+          </div>
+        </a>
+
+        <!-- 分区 4：资源仓库 -->
+        <a
+          href="#/resources"
+          class="portal-card card-repo"
+          data-section="resources"
+          data-target-url="./resources/index.html"
+        >
+          <div class="portal-card-top">
+            <div class="portal-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <span class="portal-tag">/resources/*</span>
+          </div>
+          <div>
+            <div class="portal-title">
+              <span>资源仓库</span>
+              <span class="portal-arrow">→</span>
+            </div>
+            <p class="portal-desc">常用工具配置、模板文件与开源资料整理。</p>
+          </div>
+        </a>
+      </section>
+
+      <!-- 5. 子文件夹文章/游戏列表视图 -->
+      <section id="subpageContainer" class="subpage-view" aria-live="polite">
+        <div class="subpage-header">
+          <div>
+            <h3 id="subpageTitle" style="font-size: 1.35rem; font-weight: 700;">分区标题</h3>
+            <p id="subpageSubtitle" style="font-size: 0.84rem; color: var(--text-muted); margin-top: 2px;"></p>
+          </div>
+          <div class="subpage-actions">
+            <button type="button" id="copySubpageTemplateBtn" class="back-home-btn" title="复制子文件夹下的 index.html 子页面模板代码">
+              📄 复制子页面 HTML 模板
+            </button>
+            <button type="button" id="rescanFolderBtn" class="back-home-btn" title="重新扫描子文件夹并抓取各子页面标题">
+              ↻ 重新扫描目录
+            </button>
+            <button type="button" id="backHomeBtn" class="back-home-btn">
+              ← 返回四个分区主页
+            </button>
+          </div>
+        </div>
+
+        <div class="crawler-status-bar">
+          <div>
+            当前目录：<span id="crawlerPathBadge" class="crawler-path-badge">/tech</span>
+          </div>
+          <div id="crawlerSourceInfo" style="font-family: var(--font-mono); font-size: 0.76rem; color: var(--text-muted);">
+            正在检索子文件夹及对应子页面...
+          </div>
+        </div>
+
+        <div id="subpageContent" class="subpage-list"></div>
+      </section>
+
+      <footer class="site-footer">
+        <p>
+          © <span id="currentYear">2026</span> <strong>TM_Sharweek</strong> ·
+          Style inspired by <a href="https://www.cnblogs.com/sharweek" target="_blank" rel="noopener noreferrer">cnblogs.com/sharweek</a>
+        </p>
+      </footer>
+    </div>
+  </main>
+
+  <div id="toastNotice" class="toast-notice" role="status" aria-live="polite"></div>
+
+  <script>
+    /* ==========================================================================
+       博客核心配置区 (BLOG_CONFIG)
+       - 已移除所有预设示例文章/游戏数据，仅保留真实 GitHub 仓库子文件夹爬取逻辑。
+       ========================================================================== */
+    const BLOG_CONFIG = {
+      /* ------------------------------------------------------------------------
+         1. 背景图片按权重随机配置 (backgrounds)
+         - url: 背景图片路径（如 "./bg1.jpg"、"./bg2.jpg" 或外部图床 URL）
+         - weight: 权重值（支持任意正数，抽中概率 = 当前项 weight / 所有项 weight 总和）
+         - name: 背景名称（可选）
+         ------------------------------------------------------------------------ */
+      backgrounds: [
+        {
+          name: "阿绫",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/t55ghywt.png",
+          weight: 13
+        },
+        {
+          name: "二重变革",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/5c26cnb1.png",
+          weight: 3
+        },
+        {
+          name: "月巷",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/hjqw3cv3.png",
+          weight: 1
+        },
+        {
+          name: "九重现实",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/9qdrt0hk.png",
+          weight: 1
+        },
+        {
+          name: "傲娇绫",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/cuna6iak.png",
+          weight: 1
+        },
+        {
+          name: "五重空洞",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/rpd6v91b.png",
+          weight: 1
+        },
+        {
+          name: "世末绫",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/nw1msrkd.png",
+          weight: 1
+        },
+        {
+          name: "世末歌者",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/kut13cln.png",
+          weight: 1
+        },
+        {
+          name: "小焰",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/s57te7ko.png",
+          weight: 1
+        },
+        {
+          name: "待我归乡",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/vgphr83p.png",
+          weight: 1
+        },
+        {
+          name: "遗忘的物语",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/ksdftve2.png",
+          weight: 1
+        },
+        {
+          name: "病房组",
+          url: "https://cdn.luogu.com.cn/upload/image_hosting/a4j7q31r.png",
+          weight: 1
+        }
+      ],
+
+      /* ------------------------------------------------------------------------
+         2. GitHub 仓库子文件夹自动爬虫配置 (githubCrawler)
+         - 部署在 *.github.io 时会自动识别 owner 与 repo；
+         - 若使用自定义域名或本地调试，可手动填写 owner (GitHub 用户名) 与 repo (仓库名)。
+         ------------------------------------------------------------------------ */
+      githubCrawler: {
+        autoDetectFromDomain: true,
+        owner: "",
+        repo: "",
+        branch: "main"
+      },
+
+      /* ------------------------------------------------------------------------
+         3. 四大分区目录元信息（不包含任何预设示例文章）
+         ------------------------------------------------------------------------ */
+      sections: {
+        tech: {
+          title: "技术博客",
+          subtitle: "自动读取 /tech/* 下的各个子文件夹子页面",
+          folder: "tech",
+          itemTypeLabel: "技术文章",
+          actionText: "阅读文章"
+        },
+        literature: {
+          title: "文学作品",
+          subtitle: "自动读取 /literature/* 下的各个子文件夹子页面",
+          folder: "literature",
+          itemTypeLabel: "文学作品",
+          actionText: "阅读全文"
+        },
+        games: {
+          title: "迷你游戏",
+          subtitle: "自动读取 /games/* 下的各个子文件夹子页面",
+          folder: "games",
+          itemTypeLabel: "网页游戏",
+          actionText: "启动游戏"
+        },
+        resources: {
+          title: "资源仓库",
+          subtitle: "自动读取 /resources/* 下的各个子文件夹子页面",
+          folder: "resources",
+          itemTypeLabel: "资源专页",
+          actionText: "查看资源"
+        }
+      },
+
+      /* ------------------------------------------------------------------------
+         4. 随机句子库 (在此处替换为你的句子列表)
+         ------------------------------------------------------------------------ */
+      quotes: [
+          "歌唱是新世纪咬碎旧时代的嘶吼",
+          "求你用诚挚的声音，将我唤醒，再一次相信",
+          "无望的等待加深结局的刻骨，是救赎还是推我上绝路？",
+          "爱你是我尝过最极致的甘苦，从甜转瞬变成咽不下的剧毒",
+          "为什么努力？将什么相信？都变成了奢侈的议题",
+          "从来没有人许诺会给我们天堂。高山和流水，是什么让我如此嚣张",
+          "无人能酣享命运，命运是伪命题",
+          "如果我能单纯爱上一片树叶，是否就能做到再次爱上这个世界",
+          "请让我，冲破粘稠的壳，为她野蛮生长",
+          "也道大哉乾元切切实实一言中",
+          "谁经过世界的尽头，拉住我的手",
+          "若是夏风能够，带我越过这重重繁华，我仍会停留",
+          "将世界最后的空白刻印在斑驳心海，而我等蜉蝣只得抒发不足日的无奈",
+          "我所描绘的一切或许并非真实，但我的感受绝无虚假",
+          "我想要太多太多，装满房子，欢乐自由，每刻每时",
+          "我失去太多太多，散落如写满狂言妄语的废纸",
+          "你在名为弱小的深渊，究竟看见过什么",
+          "即使所有回忆所有希冀终会淡去，你仍在故事终点再次执笔直到将这宿命尽数付之一炬",
+          "肆意鸣唱，直到嘶哑那刻",
+          "只是终究喑哑，唯有转身退场",
+          "阴雨后苍蓝天空，温度略有所回升",
+          "有没有谁能够代替我，同未来打个招呼",
+          "说好从今以后都牵着手，因为要走很远",
+          "浮世千寻沐，冲淡了我的轮廓",
+          "请别让我独自匍匐于滂沱世末之雨",
+          "我仍然在无人问津的阴雨霉湿之地，和着雨音唱着没有听众的歌曲",
+          "为世界终结前最后的画面，配上的将会是怎样的旁白",
+          "祈求明天不会到来就好了之类的空想，将这一切湮灭的便是你的愿望",
+          "将世界终结前最后的空白，深深刻印进死水般的心海",
+          "即使在这阴郁天空下无知无觉地死去，会落泪的也只有世末的积雨云吧",
+          "曲终之时，你是否便会回应我的心音",
+          "今天种叫它明天结果，夜拜佛求他晨来保佑",
+          "是谁将沧桑的离歌奏响，配我诗意的弹唱",
+          "你的声音击破，梦魇一重一重，自最遥远的彼方呼唤我",
+          "对偌大宇宙来说，我们意味着什么，是一个梦还是一个错",
+          "如果说，有一天，再相见，将这份无用思念，与你再讲一遍",
+          "可是我爱你，绝对不只是神传递的指令",
+          "那沙城塌了便塌，反正我会搭建出更高的大厦",
+          "若能向神灯许愿，我想这个世界陷入一次，不被悲伤打扰的睡眠",
+          "新生的奇迹覆盖过页脚残缺，终会开满在这重生的花园",
+          "少年人孤勇，揣紧玫瑰，刺杀恶龙",
+          "能不能忘掉脆弱，飞蛾扑火。黑暗中寻觅光芒，浴火重生",
+          "因为你是我的慰藉，多么沉重的负担。好在你始终微笑着，浑然不觉",
+          "我无法又无天，借一步相偎，只给你看我软肋",
+          "有目标在前方，时代才终会追上",
+          "作者将因何而亡？因还怀揣希望，因还怀念乐园过往",
+          "火将铸造我的身躯，褒奖未曾言弃",
+          "人生是场层层叠叠的戏剧，我就知道我注定会遇到你",
+          "那个女孩想将什么要回来？在人群中间把枪对准自己的脑袋",
+          "风把我不想知道的事情告诉我，河把我不想忘却的故事也带走",
+          "抓住和抓不住的照片，哪张更美；去过和没去过的地方，哪里更远",
+          "一去不回还，风起水起难靠岸",
+          "顺流入大海，海不问我从何处来",
+          "长风长风飘在山海间，白鸟白鸟展翅入苍天",
+          "一去入苍天，苍天远在海背面；一去入苍天，苍天远比海更远",
+          "一去那地方，那是你我共同故乡",
+          "白鸟我的白鸟，逆着风去吧",
+          "我多害怕革命者失去了信仰，创作者舍弃掉发光的骄傲",
+          "我能不能够成为自己向往的人，继续开凿直到再遇见曙光",
+          "勿要用纯氧窒息伤痕累累的人，勿要与我说虚伪的爱。",
+          "有很多即使此去经年也无法忘怀的事，依然无法原谅",
+          "有很多即使白纸黑字也无法裁决的事，依然想要反抗",
+          "伤疤依然保持着原样，随时等待被揭下",
+          "越是执念，越是疯魔",
+          "若非你，我怎么会病入膏肓",
+          "原谅我，原谅我落荒而逃",
+          "诞生在这寒冷真空，无声宇宙，向往着永恒",
+          "最纯粹的自我，绝不接受这讽刺的堕落",
+          "再见，脑海有身影浮现",
+          "少年人的心伤，无病呻吟的最后，还不是借着旋律你来我往捉迷藏",
+          "究竟是谁将呕心泣血的感情欺骗",
+          "所以在我燃尽之前，毁灭之前，疯狂掉之前，还是想把乐园在的坐标示意给远方",
+          "相信这多舛的旅行，微笑哭泣，依然有意义",
+          "也会化作幸福的流星雨，完成约定",
+          "那就跑，一起跑，留住光，不管是多么渺小",
+          "忘却被爱的言语，零落在冰冷的囹圄",
+          "睁开眼重新堕入平凡的世界，辗转枯燥的时间一天又一天",
+          "我追逐的泡沫，原来如此沉重",
+          "无意之中忘记，是用谁的笔，写下以为不会分离的话语",
+          "面对凶险的今后，别离开我",
+          "我试图临摹你留下的镌刻，只收获一纸不成文也不成器的寄托",
+          "挥动遗忘的利刃，沿着时间轴细细剖析",
+          "只因为无论世界还是我们都变得太过卑劣了",
+          "世人看她皆疯癫，她看世人皆深渊",
+          "你说谁更不体面？",
+          "红石蒜在无人之地盛开，妄议着未来，于是溃败",
+          "华而不实的神谕，浸透漆黑的顽疾",
+          "背叛的神是否依然坚持对我的审判",
+          "伤心或沉湎，皆是昨天",
+          "再见吧终会相见，莫为此放弃明天",
+          "她浅笑着没入白浪，摇晃在美梦中一样",
+          "神啊，都经过了这样的人生，至少让我做一次幸福的梦吧",
+          "我常常追忆过去，生命瞬间定格在脑海"
+      ],
+
+      /* ------------------------------------------------------------------------
+         5. 左上角侧边栏友情链接列表
+         ------------------------------------------------------------------------ */
+      friends: [
+        {
+          name: "TM_Sharweek 博客园",
+          desc: "博客园主站技术归档与随笔",
+          url: "https://www.cnblogs.com/sharweek",
+          avatarText: "CN"
+        },
+        {
+          name: "GitHub 主页",
+          desc: "代码仓库与项目源码托管",
+          url: "https://github.com/ToukaSatomi",
+          avatarText: "GH"
+        }
+      ]
+    };
+
+    /* ==========================================================================
+       核心交互逻辑：
+       1. 背景图片按权重随机抽取 (pickWeightedBackground)
+       2. 随机句子抽取 (pickRandomQuote)
+       3. 子文件夹＝单篇文章/游戏子页面自动爬取与解析
+       ========================================================================== */
+    (function initBlog() {
+      const quoteTextEl = document.getElementById("randomQuoteText");
+      const quoteBtnEl = document.getElementById("randomQuoteBtn");
+      const randomBgBtn = document.getElementById("randomBgBtn");
+      const currentBgLabel = document.getElementById("currentBgLabel");
+      const bgWeightListContainer = document.getElementById("bgWeightListContainer");
+      const stealthBtn = document.getElementById("stealthSidebarBtn");
+      const closeSidebarBtn = document.getElementById("closeSidebarBtn");
+      const sidebarDrawer = document.getElementById("sidebarDrawer");
+      const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+      const friendLinksContainer = document.getElementById("friendLinksContainer");
+      const copyEmailBtn = document.getElementById("copyEmailBtn");
+      const portalGridSection = document.getElementById("portalGridSection");
+      const subpageContainer = document.getElementById("subpageContainer");
+      const subpageTitle = document.getElementById("subpageTitle");
+      const subpageSubtitle = document.getElementById("subpageSubtitle");
+      const subpageContent = document.getElementById("subpageContent");
+      const backHomeBtn = document.getElementById("backHomeBtn");
+      const rescanFolderBtn = document.getElementById("rescanFolderBtn");
+      const copySubpageTemplateBtn = document.getElementById("copySubpageTemplateBtn");
+      const crawlerPathBadge = document.getElementById("crawlerPathBadge");
+      const crawlerSourceInfo = document.getElementById("crawlerSourceInfo");
+      const toastNotice = document.getElementById("toastNotice");
+
+      let lastQuoteIndex = -1;
+      let toastTimer = null;
+      let currentActiveSection = null;
+
+      function showToast(message) {
+        if (!toastNotice) return;
+        toastNotice.textContent = message;
+        toastNotice.classList.add("is-visible");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastNotice.classList.remove("is-visible");
+        }, 2800);
+      }
+
+      // 1. 按照权重随机抽取背景图片
+      function pickWeightedBackground(manualClick) {
+        const pool = (BLOG_CONFIG.backgrounds || []).filter(function (item) {
+          return item && item.url && Number(item.weight) > 0;
+        });
+        if (pool.length === 0) return;
+
+        const totalWeight = pool.reduce(function (sum, item) {
+          return sum + Number(item.weight);
+        }, 0);
+
+        let rand = Math.random() * totalWeight;
+        let chosenIndex = 0;
+        for (let i = 0; i < pool.length; i++) {
+          rand -= Number(pool[i].weight);
+          if (rand <= 0) {
+            chosenIndex = i;
+            break;
+          }
+        }
+
+        const chosen = pool[chosenIndex];
+        const probPercent = Math.round((Number(chosen.weight) / totalWeight) * 100);
+
+        document.documentElement.style.setProperty("--bg-image", 'url("' + chosen.url + '")');
+
+        if (currentBgLabel) {
+          currentBgLabel.textContent = (chosen.name || ("图" + (chosenIndex + 1))) +
+            " (权重 " + chosen.weight + "/" + totalWeight + " · " + probPercent + "%)";
+        }
+
+        renderBgWeightList(pool, totalWeight, chosenIndex);
+
+        if (manualClick) {
+          showToast("已按权重随机切换背景：「" + (chosen.name || ("图" + (chosenIndex + 1))) + "」（权重 " + chosen.weight + "，概率 " + probPercent + "%）");
+        }
+      }
+
+      function renderBgWeightList(pool, totalWeight, activeIdx) {
+        if (!bgWeightListContainer) return;
+        bgWeightListContainer.innerHTML = "";
+        pool.forEach(function (item, idx) {
+          const pct = Math.round((Number(item.weight) / totalWeight) * 100);
+          const row = document.createElement("div");
+          row.className = "bg-weight-item" + (idx === activeIdx ? " is-current" : "");
+          row.innerHTML =
+            "<span>" + (idx === activeIdx ? "● " : "○ ") + (item.name || ("背景 " + (idx + 1))) + "</span>" +
+            '<span style="font-family:var(--font-mono);font-size:0.75rem;">权重 ' + item.weight + " (" + pct + "%)</span>";
+          bgWeightListContainer.appendChild(row);
+        });
+      }
+
+      if (randomBgBtn) {
+        randomBgBtn.addEventListener("click", function () {
+          pickWeightedBackground(true);
+        });
+      }
+      pickWeightedBackground(false);
+
+      // 2. 随机抽取一行句子
+      function pickRandomQuote() {
+        const list = BLOG_CONFIG.quotes;
+        if (!Array.isArray(list) || list.length === 0) {
+          quoteTextEl.textContent = "请在 BLOG_CONFIG.quotes 中填入你的句子列表。";
+          return;
+        }
+        let nextIndex = Math.floor(Math.random() * list.length);
+        if (list.length > 1 && nextIndex === lastQuoteIndex) {
+          nextIndex = (nextIndex + 1) % list.length;
+        }
+        lastQuoteIndex = nextIndex;
+        quoteTextEl.style.opacity = "0";
+        setTimeout(function () {
+          quoteTextEl.textContent = "“ " + list[nextIndex] + " ”";
+          quoteTextEl.style.opacity = "1";
+        }, 120);
+      }
+
+      quoteBtnEl.addEventListener("click", pickRandomQuote);
+      pickRandomQuote();
+
+      // 3. 渲染侧边栏友链
+      function renderFriends() {
+        friendLinksContainer.innerHTML = "";
+        (BLOG_CONFIG.friends || []).forEach(function (friend) {
+          const a = document.createElement("a");
+          a.className = "friend-card";
+          a.href = friend.url;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.innerHTML =
+            '<div class="friend-avatar">' + (friend.avatarText || "友") + "</div>" +
+            '<div class="friend-info">' +
+              '<div class="friend-name">' + friend.name + "</div>" +
+              '<div class="friend-desc">' + friend.desc + "</div>" +
+            "</div>";
+          friendLinksContainer.appendChild(a);
+        });
+      }
+      renderFriends();
+
+      // 4. 侧边栏开关控制
+      function toggleSidebar(forceOpen) {
+        const isOpen = typeof forceOpen === "boolean"
+          ? forceOpen
+          : !sidebarDrawer.classList.contains("is-open");
+        sidebarDrawer.classList.toggle("is-open", isOpen);
+        sidebarBackdrop.classList.toggle("is-open", isOpen);
+        stealthBtn.classList.toggle("is-active", isOpen);
+      }
+
+      stealthBtn.addEventListener("click", function () { toggleSidebar(); });
+      closeSidebarBtn.addEventListener("click", function () { toggleSidebar(false); });
+      sidebarBackdrop.addEventListener("click", function () { toggleSidebar(false); });
+
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && sidebarDrawer.classList.contains("is-open")) {
+          toggleSidebar(false);
+        } else if ((e.key === "m" || e.key === "M") && document.activeElement.tagName !== "INPUT") {
+          toggleSidebar();
+        }
+      });
+
+      // 5. 剪贴板复制工具
+      function copyTextToClipboard(text, successMsg) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            showToast(successMsg);
+          }).catch(function () {
+            fallbackCopy(text, successMsg);
+          });
+        } else {
+          fallbackCopy(text, successMsg);
+        }
+      }
+
+      function fallbackCopy(text, successMsg) {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand("copy");
+          showToast(successMsg);
+        } catch (err) {
+          showToast("复制失败，请手动复制");
+        }
+        document.body.removeChild(ta);
+      }
+
+      if (copyEmailBtn) {
+        copyEmailBtn.addEventListener("click", function () {
+          const email = copyEmailBtn.getAttribute("data-email") || "sharweek@example.com";
+          copyTextToClipboard(email, "已复制邮箱地址：" + email);
+        });
+      }
+
+      // 复制标准子页面 HTML 模板 (直接引用根目录 ../../style.css)
+      if (copySubpageTemplateBtn) {
+        copySubpageTemplateBtn.addEventListener("click", function () {
+          const tpl = [
+            "<!DOCTYPE html>",
+            '<html lang="zh-CN">',
+            "<head>",
+            '  <meta charset="UTF-8" />',
+            '  <meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+            "  <title>文章或作品标题 | TM_Sharweek</title>",
+            '  <meta name="description" content="在此处填写简短摘要，主页爬虫会自动读取显示在卡片上。" />',
+            '  <meta name="post-date" content="2026-11-23" />',
+            '  <meta name="post-tags" content="标签1,标签2" />',
+            '  <link rel="stylesheet" href="../../style.css" />',
+            "</head>",
+            "<body>",
+            '  <main class="main-stage">',
+            '    <div class="glass-main-frame">',
+            '      <article class="article-subpage-card">',
+            '        <div style="margin-bottom:16px;"><a href="../../index.html" class="back-home-btn" style="text-decoration:none;">← 返回 TM_Sharweek 主页</a></div>',
+            '        <h1 style="font-size:1.8rem;margin-bottom:8px;">文章或作品标题</h1>',
+            '        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:20px;">发布于 2026-11-23</p>',
+            '        <div class="article-body">',
+            "          <p>在这里编写正文内容...</p>",
+            "        </div>",
+            "      </article>",
+            "    </div>",
+            "  </main>",
+            "</body>",
+            "</html>"
+          ].join("\n");
+          copyTextToClipboard(tpl, "已复制子页面 index.html 模板");
+        });
+      }
+
+      // 6. 自动识别 GitHub 仓库并爬取每个子文件夹对应的文章/游戏子页面元数据
+      function resolveGitHubRepoInfo() {
+        const cfg = BLOG_CONFIG.githubCrawler || {};
+        let owner = (cfg.owner || "").trim();
+        let repo = (cfg.repo || "").trim();
+
+        if ((!owner || !repo) && cfg.autoDetectFromDomain) {
+          const host = window.location.hostname || "";
+          if (host.endsWith(".github.io")) {
+            owner = host.replace(".github.io", "");
+            const pathParts = window.location.pathname.split("/").filter(Boolean);
+            const topFolders = ["tech", "literature", "games", "resources"];
+            if (pathParts.length > 0 && topFolders.indexOf(pathParts[0]) === -1 && !pathParts[0].endsWith(".html")) {
+              repo = pathParts[0];
+            } else {
+              repo = owner + ".github.io";
+            }
+          }
+        }
+        return { owner: owner, repo: repo, branch: cfg.branch || "main" };
+      }
+
+      async function fetchSubpageMeta(folderObj, sectionData) {
+        const subpageUrl = "./" + folderObj.path + "/index.html";
+        try {
+          const resp = await fetch(subpageUrl, { method: "GET" });
+          if (resp.ok) {
+            const htmlText = await resp.text();
+            const doc = new DOMParser().parseFromString(htmlText, "text/html");
+            const rawTitle =
+              (doc.querySelector('meta[name="post-title"]') && doc.querySelector('meta[name="post-title"]').getAttribute("content")) ||
+              (doc.querySelector("h1") && doc.querySelector("h1").textContent) ||
+              doc.title ||
+              folderObj.name;
+            const cleanTitle = rawTitle.replace(/\s*\|\s*TM_Sharweek.*$/i, "").trim() || folderObj.name;
+            const desc =
+              (doc.querySelector('meta[name="description"]') && doc.querySelector('meta[name="description"]').getAttribute("content")) ||
+              (doc.querySelector("article p, main p, p") && doc.querySelector("article p, main p, p").textContent.slice(0, 90)) ||
+              ("点击进入 /" + folderObj.path + "/index.html");
+            const date =
+              (doc.querySelector('meta[name="post-date"]') && doc.querySelector('meta[name="post-date"]').getAttribute("content")) ||
+              "已发布";
+            const tagsAttr =
+              (doc.querySelector('meta[name="post-tags"]') && doc.querySelector('meta[name="post-tags"]').getAttribute("content")) || "";
+            const tags = tagsAttr
+              ? tagsAttr.split(",").map(function (t) { return t.trim(); }).filter(Boolean)
+              : [folderObj.name];
+
+            return {
+              name: folderObj.name,
+              path: folderObj.path,
+              targetUrl: subpageUrl,
+              articleTitle: cleanTitle,
+              date: date,
+              tags: tags,
+              desc: desc
+            };
+          }
+        } catch (e) {
+          // 若子文件夹下尚未放置 index.html，则使用子文件夹名称作为标题
+        }
+        return {
+          name: folderObj.name,
+          path: folderObj.path,
+          targetUrl: subpageUrl,
+          articleTitle: folderObj.name,
+          date: "子页面",
+          tags: [folderObj.name],
+          desc: "点击打开 /" + folderObj.path + "/index.html"
+        };
+      }
+
+      async function crawlSubfoldersAsArticles(sectionKey, sectionData) {
+        const folderName = sectionData.folder || sectionKey;
+        const gh = resolveGitHubRepoInfo();
+
+        if (!gh.owner || !gh.repo) {
+          return {
+            source: "未检测到 GitHub Pages 域名（可在 BLOG_CONFIG.githubCrawler 中填写 owner 与 repo）",
+            items: []
+          };
+        }
+
+        const apiUrl = "https://api.github.com/repos/" +
+          encodeURIComponent(gh.owner) + "/" +
+          encodeURIComponent(gh.repo) + "/contents/" +
+          encodeURIComponent(folderName) +
+          (gh.branch ? "?ref=" + encodeURIComponent(gh.branch) : "");
+
+        try {
+          const resp = await fetch(apiUrl, {
+            headers: { "Accept": "application/vnd.github.v3+json" }
+          });
+          if (resp.ok) {
+            const items = await resp.json();
+            if (Array.isArray(items)) {
+              const subDirs = items.filter(function (item) {
+                return item.type === "dir";
+              });
+              const enriched = await Promise.all(subDirs.map(function (dir) {
+                return fetchSubpageMeta({ name: dir.name, path: dir.path }, sectionData);
+              }));
+              return {
+                source: "已从 GitHub 仓库 /" + folderName + " 目录自动获取子文件夹",
+                items: enriched
+              };
+            }
+          } else if (resp.status === 404) {
+            return {
+              source: "仓库中尚未创建 /" + folderName + " 文件夹",
+              items: []
+            };
+          }
+        } catch (err) {
+          return {
+            source: "无法连接 GitHub API 读取 /" + folderName + " 目录",
+            items: []
+          };
+        }
+
+        return {
+          source: "目录下暂无子文件夹",
+          items: []
+        };
+      }
+
+      function renderSubfolderArticleButtons(items, sectionData) {
+        subpageContent.innerHTML = "";
+
+        if (!items || items.length === 0) {
+          const emptyCard = document.createElement("div");
+          emptyCard.className = "article-subpage-card";
+          emptyCard.innerHTML =
+            '<p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.7;">' +
+              "当前 <code>/" + sectionData.folder + "</code> 目录下暂无已爬取到的子文件夹。<br/>" +
+              "部署至 GitHub Pages（或在 <code>BLOG_CONFIG.githubCrawler</code> 中填入你的 <code>owner</code> 和 <code>repo</code>）并在仓库中创建如 <code>/" + sectionData.folder + "/子文件夹名/index.html</code> 后，此处会自动生成对应的毛玻璃跳转按钮。" +
+            "</p>";
+          subpageContent.appendChild(emptyCard);
+          return;
+        }
+
+        const grid = document.createElement("div");
+        grid.className = "subfolder-grid";
+
+        items.forEach(function (item) {
+          const btn = document.createElement("a");
+          btn.className = "subfolder-glass-btn";
+          btn.href = item.targetUrl;
+
+          const tagsHtml = (item.tags || []).map(function (t) {
+            return '<span class="mini-tag">#' + t + "</span>";
+          }).join("");
+
+          btn.innerHTML =
+            "<div>" +
+              '<div class="subfolder-meta-row" style="margin-bottom:8px;">' +
+                '<span class="subfolder-type-tag">' + (sectionData.itemTypeLabel || "子页面") + " · " + item.date + "</span>" +
+                '<span class="subfolder-path-pill">/' + item.path + "</span>" +
+              "</div>" +
+              '<h4 class="subfolder-article-title">' + item.articleTitle + "</h4>" +
+              '<p class="subfolder-desc" style="margin-top:6px;">' + item.desc + "</p>" +
+            "</div>" +
+            "<div>" +
+              '<div class="subfolder-tags-row" style="margin-bottom:10px;">' + tagsHtml + "</div>" +
+              '<div class="subfolder-footer">' +
+                "<span>" + (sectionData.actionText || "打开子页面") + " (" + item.name + "/index.html)</span>" +
+                "<span>→</span>" +
+              "</div>" +
+            "</div>";
+
+          grid.appendChild(btn);
+        });
+
+        subpageContent.appendChild(grid);
+      }
+
+      async function openSection(sectionKey) {
+        const sectionData = BLOG_CONFIG.sections[sectionKey];
+        if (!sectionData) return;
+
+        currentActiveSection = sectionKey;
+        const folderName = sectionData.folder || sectionKey;
+
+        portalGridSection.style.display = "none";
+        subpageContainer.classList.add("is-active");
+        subpageTitle.textContent = sectionData.title;
+        subpageSubtitle.textContent = sectionData.subtitle;
+        crawlerPathBadge.textContent = "/" + folderName;
+        crawlerSourceInfo.textContent = "正在检索 /" + folderName + " 下的子文件夹...";
+        subpageContent.innerHTML = "";
+
+        const result = await crawlSubfoldersAsArticles(sectionKey, sectionData);
+        crawlerSourceInfo.textContent = result.source + " · 共 " + result.items.length + " 项";
+        renderSubfolderArticleButtons(result.items, sectionData);
+      }
+
+      function returnHome() {
+        currentActiveSection = null;
+        subpageContainer.classList.remove("is-active");
+        portalGridSection.style.display = "grid";
+        if (window.location.hash) {
+          history.replaceState(null, "", window.location.pathname);
+        }
+      }
+
+      document.querySelectorAll(".portal-card").forEach(function (card) {
+        card.addEventListener("click", function (e) {
+          const sectionKey = card.getAttribute("data-section");
+          e.preventDefault();
+          openSection(sectionKey);
+        });
+      });
+
+      if (rescanFolderBtn) {
+        rescanFolderBtn.addEventListener("click", function () {
+          if (currentActiveSection) {
+            openSection(currentActiveSection);
+            showToast("已重新扫描 /" + currentActiveSection + " 目录");
+          }
+        });
+      }
+
+      backHomeBtn.addEventListener("click", returnHome);
+
+      document.getElementById("currentYear").textContent = new Date().getFullYear();
+    })();
+  </script>
+</body>
+</html>
