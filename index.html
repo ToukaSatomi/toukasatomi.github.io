@@ -381,13 +381,13 @@
       oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
       modelJsonUrl: "./102800/model.model3.json", // <-- 改成你的 .model3.json 路径
         display: {
-          position: "right",
-          width: 190,
-          height: 340,
-          hOffset: 16,
-          vOffset: -15,
-          scale: 1
-        },
+       position: "right",
+       width: 300,    // 原为 190：等比放大画布宽度（想再放大可同比例改成 340）
+       height: 560,   // 原为 340：等比放大画布高度（想再放大可同比例改成 630）
+       hOffset: 10,   // 距离右边缘像素
+       vOffset: -200, // 原为 -15：负数绝对值越大，人物越往下沉（只露出放大后的上半身）
+       scale: 1
+       },
         mobile: {
           show: true,
           scale: 0.6
