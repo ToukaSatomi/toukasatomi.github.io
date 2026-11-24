@@ -382,12 +382,16 @@
       modelJsonUrl: "./102800/model.model3.json", // <-- 改成你的 .model3.json 路径
         display: {
        position: "right",
-       width: 300,    // 原为 190：等比放大画布宽度（想再放大可同比例改成 340）
-       height: 560,   // 原为 340：等比放大画布高度（想再放大可同比例改成 630）
-       hOffset: 10,   // 距离右边缘像素
-       vOffset: -200, // 原为 -15：负数绝对值越大，人物越往下沉（只露出放大后的上半身）
+       width: 280,
+       height: 500,
+       boxHeight: 300,      // 右下角可视窗口高度（越小裁掉的下半身越多）
+       upperZoom: 1.9,      // 上半身等比放大倍率（当前为 1.9 倍，想更大可改 2.2 ~ 2.5）
+       anchorY: "18%",      // 放大锚点（若头顶被裁就调小如 "8%"，若头顶空白多就调大如 "28%"）
+       shiftY: "0px",       // 垂直微调（如 "-25px" 整体上提，"25px" 整体下沉）
+       hOffset: 12,
+       vOffset: 0,
        scale: 1
-       },
+     },
         mobile: {
           show: true,
           scale: 0.6
