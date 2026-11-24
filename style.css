@@ -1013,11 +1013,10 @@ body {
 #live2d-widget,
 .live2d-widget-container {
   position: fixed !important;
-  right: 12px !important;
-  bottom: 0 !important;
   left: auto !important;
   z-index: 990 !important;
   pointer-events: auto !important;
+  overflow: hidden;
 }
 
 @media (max-width: 680px) {
