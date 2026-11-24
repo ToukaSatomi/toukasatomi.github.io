@@ -1013,10 +1013,20 @@ body {
 #live2d-widget,
 .live2d-widget-container {
   position: fixed !important;
+  right: 12px !important;
+  bottom: 0 !important;
   left: auto !important;
+  width: var(--live2d-box-width, 280px) !important;
+  height: var(--live2d-box-height, 300px) !important; /* 只保留上半身窗口高度 */
+  overflow: hidden !important;                        /* 裁切隐藏下半身 */
   z-index: 990 !important;
   pointer-events: auto !important;
-  overflow: hidden;
+}
+
+#live2d-widget canvas,
+#live2dcanvas {
+  transform-origin: 50% var(--live2d-anchor-y, 18%) !important; /* 锁定上半身中心缩放 */
+  transform: translateY(var(--live2d-shift-y, 0px)) scale(var(--live2d-zoom, 1.9)) !important;
 }
 
 @media (max-width: 680px) {
