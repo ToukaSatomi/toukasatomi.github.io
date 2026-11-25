@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>2048 | TM_Sharweek</title>
+  <meta name="post-title" content="2048" />
+  <meta name="description" content="4×4毛玻璃数字滑块合成游戏" />
+  <meta name="post-date" content="2026-11-24" />
+  <meta name="post-tags" content="2048,数字合成" />
+  <link rel="stylesheet" href="../../style.css?v=20261125b" />
+  <link rel="stylesheet" href="./style.css?v=20261125b" />
+  <style>
+    /* 紧凑一屏布局兜底（防止旧版缓存 style.css 导致计分栏或棋盘错位，电脑端一屏免滚动） */
+    .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
+    .glass-main-frame.game-2048-frame { max-width: 600px; padding: 16px 22px; }
+    .game-top-bar { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.72); }
+    .game-title-group, .top-action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .game-logo-badge { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg,#2563eb,#0ea5e9); color: #fff; font-weight: 800; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; }
+    .game-title-text h1 { font-size: 1.28rem; font-weight: 800; line-height: 1.2; }
+    .hud-stats-row { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .hud-stat-card { padding: 7px 14px; border-radius: 14px; background: rgba(255,255,255,0.58); border: 1px solid rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: flex-start; }
+    .hud-stat-label { font-size: 0.72rem; font-weight: 700; color: #475569; }
+    .hud-stat-value { font-family: var(--font-mono, monospace); font-size: 1.24rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-top: 2px; }
+    .hud-stat-value.accent { color: #2563eb; }
+    .board-2048-card { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); }
+    .grid-2048-wrap { position: relative; width: 368px; height: 368px; max-width: 100%; aspect-ratio: 1 / 1; padding: 10px; border-radius: 18px; background: rgba(255,255,255,0.48); border: 1px solid rgba(255,255,255,0.88); touch-action: none; cursor: grab; user-select: none; }
+    .grid-2048-bg { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 10px; }
+    .grid-2048-cell { border-radius: 12px; background: rgba(255,255,255,0.56); border: 1px solid rgba(148,163,184,0.32); }
+    .tile-2048-layer { position: absolute; inset: 10px; pointer-events: none; }
+    .tile-2048 { position: absolute; width: calc((100% - 30px) / 4); height: calc((100% - 30px) / 4); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono, monospace); font-weight: 800; font-size: 1.65rem; box-shadow: 0 6px 16px -4px rgba(15,23,42,0.16); border: 1px solid rgba(255,255,255,0.82); transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1); }
+    .tile-2048-inner { width: 100%; height: 100%; border-radius: inherit; display: flex; align-items: center; justify-content: center; }
+    .tile-2048.is-new .tile-2048-inner { animation: tileSpawnPop 0.18s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .tile-2048.is-merged .tile-2048-inner { animation: tileMergePulse 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes tileSpawnPop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes tileMergePulse { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    .tile-2048[data-val="2"] { background: rgba(255,255,255,0.86); color: #1e293b; }
+    .tile-2048[data-val="4"] { background: rgba(224,242,254,0.9); color: #0369a1; }
+    .tile-2048[data-val="8"] { background: linear-gradient(135deg,#38bdf8,#0ea5e9); color: #fff; }
+    .tile-2048[data-val="16"] { background: linear-gradient(135deg,#3b82f6,#2563eb); color: #fff; }
+    .tile-2048[data-val="32"] { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; }
+    .tile-2048[data-val="64"] { background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff; }
+    .tile-2048[data-val="128"] { background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-size: 1.42rem; }
+    .tile-2048[data-val="256"] { background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; font-size: 1.42rem; }
+    .tile-2048[data-val="512"] { background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff; font-size: 1.42rem; }
+    .tile-2048[data-val="1024"] { background: linear-gradient(135deg,#f97316,#ea580c); color: #fff; font-size: 1.22rem; }
+    .tile-2048[data-val="2048"] { background: linear-gradient(135deg,#ec4899,#db2777); color: #fff; font-size: 1.22rem; }
+    .tile-2048.is-super { background: linear-gradient(135deg,#0f172a,#1e293b); color: #38bdf8; font-size: 1.15rem; }
+    .gameover-overlay { position: absolute; inset: 12px; border-radius: 18px; background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.28s ease; z-index: 40; }
+    .gameover-overlay.is-visible { opacity: 1; visibility: visible; }
+    @media (min-width: 641px) and (min-height: 580px) { html, body { height: 100vh; overflow: hidden; } .main-stage.game-page-stage { height: 100vh; } }
+    @media (max-width: 640px) { .hud-stats-row { grid-template-columns: repeat(2, 1fr); } .grid-2048-wrap { width: 310px; height: 310px; } }
+  </style>
+</head>
+<body>
+
+  <main class="main-stage game-page-stage">
+    <div class="glass-main-frame game-page-frame game-2048-frame">
+      <!-- 1. 顶部栏 -->
+      <header class="game-top-bar">
+        <div class="game-title-group">
+          <div class="game-logo-badge">2048</div>
+          <div class="game-title-text">
+            <h1>2048</h1>
+          </div>
+        </div>
+
+        <div class="top-action-group">
+          <button type="button" id="randomBgBtn" class="back-home-btn" title="按设定权重随机切换背景图">
+            🎲 <span id="currentBgLabel">切换背景</span>
+          </button>
+          <button type="button" id="toggleSoundBtn" class="back-home-btn" title="开关合成音效 (快捷键: M)">
+            🔊 音效
+          </button>
+          <button type="button" id="undoMoveBtn" class="back-home-btn" disabled title="撤回上一步移动 (快捷键: Z)">
+            ↶ 撤回 (Z)
+          </button>
+          <button type="button" id="restartGameBtn" class="back-home-btn" title="重新开始新对局 (快捷键: R)">
+            ↻ 重开 (R)
+          </button>
+          <a href="../../index.html" id="backBlogHomeBtn" class="back-home-btn is-primary">
+            ← 返回主页
+          </a>
+        </div>
+      </header>
+
+      <!-- 2. 四项计分与统计数据栏 -->
+      <section class="hud-stats-row" aria-label="游戏计分面板">
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">当前得分 / SCORE</span>
+          <span id="scoreValue" class="hud-stat-value accent">0</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最高纪录 / BEST</span>
+          <span id="bestScoreValue" class="hud-stat-value">0</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最大方块 / MAX TILE</span>
+          <span id="maxTileValue" class="hud-stat-value">2</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">移动步数 / MOVES</span>
+          <span id="movesCountValue" class="hud-stat-value">0</span>
+        </div>
+      </section>
+
+      <!-- 3. 4×4 毛玻璃主棋盘 -->
+      <section class="board-2048-card" aria-label="2048 四乘四主棋盘">
+        <div id="boardWrap" class="grid-2048-wrap">
+          <div class="grid-2048-bg">
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+            <div class="grid-2048-cell"></div>
+          </div>
+
+          <div id="tileLayer" class="tile-2048-layer"></div>
+        </div>
+
+        <!-- 胜利 / 游戏结束毛玻璃遮罩 -->
+        <div id="gameOverOverlay" class="gameover-overlay" role="dialog" aria-modal="true">
+          <h2 id="gameOverTitle">游戏结束</h2>
+          <p id="gameOverSummary"></p>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button type="button" id="continueKeepPlayingBtn" class="back-home-btn" style="display: none; padding: 9px 20px; font-size: 0.9rem;">
+              继续挑战
+            </button>
+            <button type="button" id="overlayRestartBtn" class="back-home-btn is-primary" style="padding: 9px 22px; font-size: 0.9rem;">
+              ↻ 再来一局
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toastNotice" class="toast-notice" role="status" aria-live="polite"></div>
+
+  <script>
+    const BLOG_CONFIG = {
+      backgrounds: [
+        { name: "阿绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/t55ghywt.png", weight: 13 },
+        { name: "二重变革", url: "https://cdn.luogu.com.cn/upload/image_hosting/5c26cnb1.png", weight: 3 },
+        { name: "月巷", url: "https://cdn.luogu.com.cn/upload/image_hosting/hjqw3cv3.png", weight: 1 },
+        { name: "九重现实", url: "https://cdn.luogu.com.cn/upload/image_hosting/9qdrt0hk.png", weight: 1 },
+        { name: "傲娇绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/cuna6iak.png", weight: 1 },
+        { name: "五重空洞", url: "https://cdn.luogu.com.cn/upload/image_hosting/rpd6v91b.png", weight: 1 },
+        { name: "世末绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/nw1msrkd.png", weight: 1 },
+        { name: "世末歌者", url: "https://cdn.luogu.com.cn/upload/image_hosting/kut13cln.png", weight: 1 },
+        { name: "小焰", url: "https://cdn.luogu.com.cn/upload/image_hosting/s57te7ko.png", weight: 1 },
+        { name: "待我归乡", url: "https://cdn.luogu.com.cn/upload/image_hosting/vgphr83p.png", weight: 1 },
+        { name: "遗忘的物语", url: "https://cdn.luogu.com.cn/upload/image_hosting/ksdftve2.png", weight: 1 },
+        { name: "病房组", url: "https://cdn.luogu.com.cn/upload/image_hosting/a4j7q31r.png", weight: 1 }
+      ],
+
+      live2d: {
+        enabled: true,
+        engine: "oml2d",
+        scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
+        oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
+        modelJsonUrl: "../../102800/model.model3.json",
+        display: {
+          position: "right",
+          width: 280,
+          height: 300,
+          boxHeight: 300,
+          upperZoom: 2.25,
+          anchorY: "0%",
+          shiftX: "10px",
+          shiftY: "20px",
+          hOffset: 12,
+          vOffset: 0,
+          scale: 1
+        },
+        mobile: { show: true, scale: 0.6 },
+        react: { opacityDefault: 0.95, opacityOnHover: 1 }
+      }
+    };
+
+    (function init2048Game() {
+      const SIZE = 4;
+      const STORAGE_KEY_BEST = "tm_sharweek_2048_best_v1";
+
+      const boardWrap = document.getElementById("boardWrap");
+      const tileLayer = document.getElementById("tileLayer");
+      const scoreValueEl = document.getElementById("scoreValue");
+      const bestScoreValueEl = document.getElementById("bestScoreValue");
+      const maxTileValueEl = document.getElementById("maxTileValue");
+      const movesCountValueEl = document.getElementById("movesCountValue");
+      const undoMoveBtn = document.getElementById("undoMoveBtn");
+      const restartGameBtn = document.getElementById("restartGameBtn");
+      const overlayRestartBtn = document.getElementById("overlayRestartBtn");
+      const continueKeepPlayingBtn = document.getElementById("continueKeepPlayingBtn");
+      const toggleSoundBtn = document.getElementById("toggleSoundBtn");
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
+      const gameOverTitle = document.getElementById("gameOverTitle");
+      const gameOverSummary = document.getElementById("gameOverSummary");
+      const toastNotice = document.getElementById("toastNotice");
+
+      let grid = [];
+      let score = 0;
+      let bestScore = Number(localStorage.getItem(STORAGE_KEY_BEST) || 0);
+      let movesCount = 0;
+      let undoSnapshot = null;
+      let isGameOver = false;
+      let hasWon2048 = false;
+      let keepPlayingAfter2048 = false;
+      let soundEnabled = true;
+      let audioCtx = null;
+      let toastTimer = null;
+
+      function showToast(msg) {
+        if (!toastNotice) return;
+        toastNotice.textContent = msg;
+        toastNotice.classList.add("is-visible");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastNotice.classList.remove("is-visible");
+        }, 2200);
+      }
+
+      // Web Audio 合成音效
+      function playTone(freq, duration, type, gainVal, delaySec) {
+        if (!soundEnabled) return;
+        try {
+          if (!audioCtx) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContextClass) return;
+            audioCtx = new AudioContextClass();
+          }
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+          }
+          const start = audioCtx.currentTime + (delaySec || 0);
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type || "sine";
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(gainVal || 0.1, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(start);
+          osc.stop(start + duration);
+        } catch (e) {}
+      }
+
+      function sfxSlide() {
+        playTone(290, 0.06, "triangle", 0.08, 0);
+      }
+
+      function sfxMerge(maxMergedVal) {
+        const pitch = Math.min(880, 360 + Math.log2(maxMergedVal || 4) * 45);
+        playTone(pitch, 0.11, "triangle", 0.12, 0);
+        playTone(pitch * 1.25, 0.12, "sine", 0.1, 0.04);
+      }
+
+      function sfxWin() {
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        notes.forEach(function (n, idx) {
+          playTone(n, 0.18, "triangle", 0.13, idx * 0.06);
+        });
+      }
+
+      function sfxGameOver() {
+        playTone(280, 0.16, "sawtooth", 0.08, 0);
+        playTone(210, 0.24, "sawtooth", 0.08, 0.14);
+      }
+
+      function createEmptyGrid() {
+        const g = [];
+        for (let r = 0; r < SIZE; r++) {
+          g.push([0, 0, 0, 0]);
+        }
+        return g;
+      }
+
+      function cloneGrid(g) {
+        return g.map(function (row) {
+          return row.slice();
+        });
+      }
+
+      function getEmptyCells(g) {
+        const list = [];
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (g[r][c] === 0) list.push({ r: r, c: c });
+          }
+        }
+        return list;
+      }
+
+      function spawnRandomTile(g) {
+        const empty = getEmptyCells(g);
+        if (empty.length === 0) return null;
+        const spot = empty[Math.floor(Math.random() * empty.length)];
+        const val = Math.random() < 0.9 ? 2 : 4;
+        g[spot.r][spot.c] = val;
+        return { r: spot.r, c: spot.c, val: val };
+      }
+
+      function getMaxTile(g) {
+        let maxV = 0;
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (g[r][c] > maxV) maxV = g[r][c];
+          }
+        }
+        return maxV || 2;
+      }
+
+      function canMoveAnywhere(g) {
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            if (g[r][c] === 0) return true;
+            if (c + 1 < SIZE && g[r][c] === g[r][c + 1]) return true;
+            if (r + 1 < SIZE && g[r][c] === g[r + 1][c]) return true;
+          }
+        }
+        return false;
+      }
+
+      function updateHud() {
+        scoreValueEl.textContent = String(score);
+        bestScoreValueEl.textContent = String(bestScore);
+        maxTileValueEl.textContent = String(getMaxTile(grid));
+        movesCountValueEl.textContent = String(movesCount);
+      }
+
+      function renderTiles(newSpot, mergedCoordsSet) {
+        tileLayer.innerHTML = "";
+        const layerWidth = tileLayer.clientWidth || 348;
+        const gap = 10;
+        const cellSize = (layerWidth - gap * 3) / 4;
+
+        for (let r = 0; r < SIZE; r++) {
+          for (let c = 0; c < SIZE; c++) {
+            const val = grid[r][c];
+            if (!val) continue;
+
+            const tile = document.createElement("div");
+            tile.className = "tile-2048";
+            tile.setAttribute("data-val", String(val));
+            if (val > 2048) {
+              tile.classList.add("is-super");
+            }
+            if (newSpot && newSpot.r === r && newSpot.c === c) {
+              tile.classList.add("is-new");
+            } else if (mergedCoordsSet && mergedCoordsSet.has(r + "," + c)) {
+              tile.classList.add("is-merged");
+            }
+
+            const tx = c * (cellSize + gap);
+            const ty = r * (cellSize + gap);
+            tile.style.transform = "translate(" + tx + "px, " + ty + "px)";
+
+            const inner = document.createElement("div");
+            inner.className = "tile-2048-inner";
+            inner.textContent = String(val);
+            tile.appendChild(inner);
+
+            tileLayer.appendChild(tile);
+          }
+        }
+      }
+
+      // 处理单行向左滑动与合并
+      function slideAndMergeLine(line) {
+        const nonZero = line.filter(function (v) { return v !== 0; });
+        const result = [];
+        const mergedIndices = [];
+        let gained = 0;
+        let maxMerged = 0;
+
+        let i = 0;
+        while (i < nonZero.length) {
+          if (i + 1 < nonZero.length && nonZero[i] === nonZero[i + 1]) {
+            const mergedVal = nonZero[i] * 2;
+            result.push(mergedVal);
+            mergedIndices.push(result.length - 1);
+            gained += mergedVal;
+            if (mergedVal > maxMerged) maxMerged = mergedVal;
+            i += 2;
+          } else {
+            result.push(nonZero[i]);
+            i += 1;
+          }
+        }
+
+        while (result.length < SIZE) {
+          result.push(0);
+        }
+
+        let changed = false;
+        for (let k = 0; k < SIZE; k++) {
+          if (result[k] !== line[k]) {
+            changed = true;
+            break;
+          }
+        }
+
+        return {
+          line: result,
+          changed: changed,
+          gained: gained,
+          maxMerged: maxMerged,
+          mergedIndices: mergedIndices
+        };
+      }
+
+      function move(direction) {
+        if (isGameOver) return false;
+
+        const prevGrid = cloneGrid(grid);
+        const prevScore = score;
+        const prevMoves = movesCount;
+
+        let anyChanged = false;
+        let totalGained = 0;
+        let highestMerged = 0;
+        const mergedCoordsSet = new Set();
+
+        if (direction === "left" || direction === "right") {
+          for (let r = 0; r < SIZE; r++) {
+            let row = grid[r].slice();
+            if (direction === "right") row.reverse();
+
+            const res = slideAndMergeLine(row);
+            if (res.changed) anyChanged = true;
+            totalGained += res.gained;
+            if (res.maxMerged > highestMerged) highestMerged = res.maxMerged;
+
+            let finalRow = res.line.slice();
+            if (direction === "right") finalRow.reverse();
+            grid[r] = finalRow;
+
+            res.mergedIndices.forEach(function (idx) {
+              const targetCol = direction === "right" ? (SIZE - 1 - idx) : idx;
+              mergedCoordsSet.add(r + "," + targetCol);
+            });
+          }
+        } else if (direction === "up" || direction === "down") {
+          for (let c = 0; c < SIZE; c++) {
+            let col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
+            if (direction === "down") col.reverse();
+
+            const res = slideAndMergeLine(col);
+            if (res.changed) anyChanged = true;
+            totalGained += res.gained;
+            if (res.maxMerged > highestMerged) highestMerged = res.maxMerged;
+
+            let finalCol = res.line.slice();
+            if (direction === "down") finalCol.reverse();
+            for (let r = 0; r < SIZE; r++) {
+              grid[r][c] = finalCol[r];
+            }
+
+            res.mergedIndices.forEach(function (idx) {
+              const targetRow = direction === "down" ? (SIZE - 1 - idx) : idx;
+              mergedCoordsSet.add(targetRow + "," + c);
+            });
+          }
+        }
+
+        if (!anyChanged) return false;
+
+        undoSnapshot = {
+          grid: prevGrid,
+          score: prevScore,
+          movesCount: prevMoves
+        };
+        undoMoveBtn.disabled = false;
+
+        score += totalGained;
+        movesCount += 1;
+        if (score > bestScore) {
+          bestScore = score;
+          localStorage.setItem(STORAGE_KEY_BEST, String(bestScore));
+        }
+
+        const newSpot = spawnRandomTile(grid);
+        updateHud();
+        renderTiles(newSpot, mergedCoordsSet);
+
+        if (highestMerged > 0) {
+          sfxMerge(highestMerged);
+        } else {
+          sfxSlide();
+        }
+
+        const currentMax = getMaxTile(grid);
+        if (currentMax >= 2048 && !hasWon2048 && !keepPlayingAfter2048) {
+          hasWon2048 = true;
+          isGameOver = true;
+          sfxWin();
+          gameOverTitle.textContent = "达成 2048！";
+          gameOverSummary.textContent = "当前得分 " + score + " 分 · 共使用 " + movesCount + " 步";
+          continueKeepPlayingBtn.style.display = "inline-flex";
+          gameOverOverlay.classList.add("is-visible");
+          return true;
+        }
+
+        if (!canMoveAnywhere(grid)) {
+          isGameOver = true;
+          sfxGameOver();
+          gameOverTitle.textContent = "游戏结束";
+          gameOverSummary.textContent = "本局得分 " + score + " 分 · 最大方块 " + currentMax;
+          continueKeepPlayingBtn.style.display = "none";
+          gameOverOverlay.classList.add("is-visible");
+        }
+
+        return true;
+      }
+
+      function performUndo() {
+        if (!undoSnapshot) return;
+        grid = cloneGrid(undoSnapshot.grid);
+        score = undoSnapshot.score;
+        movesCount = undoSnapshot.movesCount;
+        undoSnapshot = null;
+        undoMoveBtn.disabled = true;
+        isGameOver = false;
+        gameOverOverlay.classList.remove("is-visible");
+        updateHud();
+        renderTiles(null, null);
+        showToast("已撤回上一步移动");
+      }
+
+      function startNewGame() {
+        grid = createEmptyGrid();
+        score = 0;
+        movesCount = 0;
+        undoSnapshot = null;
+        undoMoveBtn.disabled = true;
+        isGameOver = false;
+        hasWon2048 = false;
+        keepPlayingAfter2048 = false;
+        continueKeepPlayingBtn.style.display = "none";
+        gameOverOverlay.classList.remove("is-visible");
+
+        spawnRandomTile(grid);
+        const second = spawnRandomTile(grid);
+        updateHud();
+        renderTiles(second, null);
+      }
+
+      function toggleSound() {
+        soundEnabled = !soundEnabled;
+        toggleSoundBtn.textContent = soundEnabled ? "🔊 音效" : "🔇 静音";
+      }
+
+      // 键盘控制 (方向键 / WASD / Z撤回 / R重开 / M静音)
+      window.addEventListener("keydown", function (e) {
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        const key = e.key;
+        if (key === "ArrowLeft" || key === "a" || key === "A") {
+          e.preventDefault();
+          move("left");
+        } else if (key === "ArrowRight" || key === "d" || key === "D") {
+          e.preventDefault();
+          move("right");
+        } else if (key === "ArrowUp" || key === "w" || key === "W") {
+          e.preventDefault();
+          move("up");
+        } else if (key === "ArrowDown" || key === "s" || key === "S") {
+          e.preventDefault();
+          move("down");
+        } else if (key === "z" || key === "Z") {
+          e.preventDefault();
+          performUndo();
+        } else if (key === "r" || key === "R") {
+          e.preventDefault();
+          startNewGame();
+        } else if (key === "m" || key === "M") {
+          e.preventDefault();
+          toggleSound();
+        }
+      });
+
+      // 鼠标拖拽与触屏滑动手势控制
+      let pointerStartX = null;
+      let pointerStartY = null;
+
+      boardWrap.addEventListener("pointerdown", function (e) {
+        pointerStartX = e.clientX;
+        pointerStartY = e.clientY;
+      });
+
+      window.addEventListener("pointerup", function (e) {
+        if (pointerStartX === null || pointerStartY === null) return;
+        const dx = e.clientX - pointerStartX;
+        const dy = e.clientY - pointerStartY;
+        pointerStartX = null;
+        pointerStartY = null;
+
+        const absX = Math.abs(dx);
+        const absY = Math.abs(dy);
+        if (Math.max(absX, absY) < 24) return;
+
+        if (absX > absY) {
+          move(dx > 0 ? "right" : "left");
+        } else {
+          move(dy > 0 ? "down" : "up");
+        }
+      });
+
+      window.addEventListener("resize", function () {
+        renderTiles(null, null);
+      });
+
+      restartGameBtn.addEventListener("click", function () {
+        startNewGame();
+        showToast("已重新开始新对局");
+      });
+      overlayRestartBtn.addEventListener("click", startNewGame);
+      continueKeepPlayingBtn.addEventListener("click", function () {
+        keepPlayingAfter2048 = true;
+        isGameOver = false;
+        gameOverOverlay.classList.remove("is-visible");
+      });
+      undoMoveBtn.addEventListener("click", performUndo);
+      toggleSoundBtn.addEventListener("click", toggleSound);
+
+      // 按权重随机切换背景图
+      const randomBgBtn = document.getElementById("randomBgBtn");
+      const currentBgLabel = document.getElementById("currentBgLabel");
+
+      function pickWeightedBackground(showMsg) {
+        const pool = (BLOG_CONFIG.backgrounds || []).filter(function (item) {
+          return item && item.url && Number(item.weight) > 0;
+        });
+        if (pool.length === 0) return;
+
+        const totalWeight = pool.reduce(function (sum, item) {
+          return sum + Number(item.weight);
+        }, 0);
+
+        let rand = Math.random() * totalWeight;
+        let chosen = pool[0];
+        for (let i = 0; i < pool.length; i++) {
+          rand -= Number(pool[i].weight);
+          if (rand <= 0) {
+            chosen = pool[i];
+            break;
+          }
+        }
+
+        document.documentElement.style.setProperty("--bg-image", 'url("' + chosen.url + '")');
+        const pct = Math.round((Number(chosen.weight) / totalWeight) * 100);
+        if (currentBgLabel) {
+          currentBgLabel.textContent = chosen.name;
+        }
+        if (showMsg) {
+          showToast("已切换背景：「" + chosen.name + "」(" + pct + "% 权重)");
+        }
+      }
+
+      pickWeightedBackground(false);
+      randomBgBtn.addEventListener("click", function () {
+        pickWeightedBackground(true);
+      });
+
+      // 右下角 Live2D 模型加载与上半身等比放大 (同时兼容 oh-my-live2d 与 live2d-widget)
+      function loadExternalScript(src) {
+        return new Promise(function (resolve, reject) {
+          const s = document.createElement("script");
+          s.src = src;
+          s.async = true;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.body.appendChild(s);
+        });
+      }
+
+      function applyLive2DUpperBodyZoom(disp) {
+        const boxW = (disp.width || 280) + "px";
+        const boxH = (disp.boxHeight || 300) + "px";
+        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 2.25;
+        const anchorY = disp.anchorY || "0%";
+        const shiftX = typeof disp.shiftX === "number" ? (disp.shiftX + "px") : (disp.shiftX || "10px");
+        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "20px");
+
+        const rootStyle = document.documentElement.style;
+        rootStyle.setProperty("--live2d-box-width", boxW);
+        rootStyle.setProperty("--live2d-box-height", boxH);
+        rootStyle.setProperty("--live2d-zoom", String(zoom));
+        rootStyle.setProperty("--live2d-anchor-y", anchorY);
+        rootStyle.setProperty("--live2d-shift-x", shiftX);
+        rootStyle.setProperty("--live2d-shift-y", shiftY);
+
+        function syncDomStyles() {
+          const stages = document.querySelectorAll("#oml2d-stage, .oml2d-stage, #live2d-widget, .live2d-widget-container");
+          stages.forEach(function (st) {
+            st.style.setProperty("position", "fixed", "important");
+            st.style.setProperty("right", (typeof disp.hOffset === "number" ? disp.hOffset : 12) + "px", "important");
+            st.style.setProperty("bottom", (typeof disp.vOffset === "number" ? disp.vOffset : 0) + "px", "important");
+            st.style.setProperty("left", "auto", "important");
+            st.style.setProperty("top", "auto", "important");
+            st.style.setProperty("width", boxW, "important");
+            st.style.setProperty("height", boxH, "important");
+            st.style.setProperty("overflow", "visible", "important");
+            st.style.setProperty("clip-path", "inset(-600px -300px 0px -300px)", "important");
+          });
+
+          const canvases = document.querySelectorAll("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
+          canvases.forEach(function (cvs) {
+            cvs.style.setProperty("transform-origin", "50% " + anchorY, "important");
+            cvs.style.setProperty("transform", "translate(" + shiftX + ", " + shiftY + ") scale(" + zoom + ")", "important");
+          });
+        }
+
+        syncDomStyles();
+        let count = 0;
+        const timer = setInterval(function () {
+          syncDomStyles();
+          count++;
+          if (count > 40) clearInterval(timer);
+        }, 180);
+      }
+
+      async function initLive2D() {
+        const cfg = BLOG_CONFIG.live2d;
+        if (!cfg || !cfg.enabled || !cfg.modelJsonUrl) return;
+        const disp = cfg.display || {};
+        const mob = cfg.mobile || {};
+        const react = cfg.react || {};
+
+        applyLive2DUpperBodyZoom(disp);
+
+        try {
+          if (cfg.engine === "oml2d") {
+            await loadExternalScript(cfg.oml2dScriptUrl || "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js");
+            if (window.OML2D && typeof window.OML2D.loadOml2d === "function") {
+              const omlInstance = window.OML2D.loadOml2d({
+                dockedPosition: "right",
+                menus: { disable: true },
+                tips: { disable: true },
+                statusBar: { disable: true },
+                models: [
+                  {
+                    path: cfg.modelJsonUrl,
+                    stageStyle: {
+                      width: disp.width || 280,
+                      height: disp.boxHeight || 300
+                    }
+                  }
+                ]
+              });
+              if (omlInstance && typeof omlInstance.onLoad === "function") {
+                omlInstance.onLoad(function () {
+                  applyLive2DUpperBodyZoom(disp);
+                });
+              }
+            }
+          } else {
+            await loadExternalScript(cfg.scriptUrl || "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js");
+            if (window.L2Dwidget && typeof window.L2Dwidget.init === "function") {
+              window.L2Dwidget.init({
+                model: { jsonPath: cfg.modelJsonUrl, scale: disp.scale || 1 },
+                display: {
+                  position: disp.position || "right",
+                  width: disp.width || 280,
+                  height: disp.boxHeight || 300,
+                  hOffset: typeof disp.hOffset === "number" ? disp.hOffset : 12,
+                  vOffset: typeof disp.vOffset === "number" ? disp.vOffset : 0
+                },
+                mobile: { show: mob.show !== false, scale: mob.scale || 0.6 },
+                react: { opacityDefault: react.opacityDefault || 0.95, opacityOnHover: react.opacityOnHover || 1 }
+              });
+            }
+          }
+          applyLive2DUpperBodyZoom(disp);
+        } catch (e) {}
+      }
+
+      initLive2D();
+      startNewGame();
+    })();
+  </script>
+</body>
+</html>
