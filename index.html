@@ -77,7 +77,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
               电子邮箱 (点击复制)
             </span>
-            <span class="contact-value">sharweek@example.com</span>
+            <span class="contact-value">sharweek@qq.com</span>
           </button>
         </div>
       </div>
@@ -298,9 +298,6 @@
     const BLOG_CONFIG = {
       /* ------------------------------------------------------------------------
          1. 背景图片按权重随机配置 (backgrounds)
-         - url: 背景图片路径（如 "./bg1.jpg" 或外部图床 URL）
-         - weight: 权重值（支持任意正数，抽中概率 = 当前项 weight / 所有项 weight 总和）
-         - name: 背景名称（可选）
          ------------------------------------------------------------------------ */
       backgrounds: [
         {
@@ -366,32 +363,26 @@
       ],
 
       /* ------------------------------------------------------------------------
-         2. 右下角 Live2D 模型配置 (参考 Hexo hexo-helper-live2d 与 oh-my-live2d)
-         - enabled: 是否启用右下角 Live2D 模型 (true / false)
-         - engine:
-             * "l2dwidget" (默认，同 Hexo 的 hexo-helper-live2d，适用于 Cubism 2 的 .moc / model.json 模型)
-             * "oml2d"     (同 Hexo/Hugo 的 oh-my-live2d，支持 Cubism 2 的 .moc 与 Cubism 3/4/5 的 .moc3 / model3.json 模型)
-         - modelJsonUrl: 模型 JSON 路径（支持 CDN 链接，或仓库本地路径如 "./live2d_models/miku/miku.model.json"）
-         - display: 位置与尺寸参数（position: "right" 固定在右下角）
+         2. 右下角 Live2D 模型配置 (支持 oh-my-live2d 的 .model3.json 与 l2dwidget)
          ------------------------------------------------------------------------ */
       live2d: {
-      enabled: true,
-      engine: "oml2d", // <-- 把 "l2dwidget" 改成 "oml2d"
-      scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
-      oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
-      modelJsonUrl: "./102800/model.model3.json", // <-- 改成你的 .model3.json 路径
+        enabled: true,
+        engine: "oml2d",
+        scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
+        oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
+        modelJsonUrl: "./102800/model.model3.json",
         display: {
-       position: "right",
-       width: 280,
-       height: 500,
-       boxHeight: 300,      // 右下角可视窗口高度（越小裁掉的下半身越多）
-       upperZoom: 1.9,      // 上半身等比放大倍率（当前为 1.9 倍，想更大可改 2.2 ~ 2.5）
-       anchorY: "18%",      // 放大锚点（若头顶被裁就调小如 "8%"，若头顶空白多就调大如 "28%"）
-       shiftY: "0px",       // 垂直微调（如 "-25px" 整体上提，"25px" 整体下沉）
-       hOffset: 12,
-       vOffset: 0,
-       scale: 1
-     },
+          position: "right",
+          width: 280,
+          height: 500,
+          boxHeight: 300,      // 右下角可视窗口高度（越小裁掉的下半身越多）
+          upperZoom: 1.9,      // 上半身等比放大倍率（当前为 1.9 倍，想更大可改 2.2 ~ 2.5）
+          anchorY: "18%",      // 放大锚点（若头顶被裁就调小如 "8%"，若头顶空白多就调大如 "28%"）
+          shiftY: "0px",       // 垂直微调（如 "-25px" 整体上提，"25px" 整体下沉）
+          hOffset: 12,
+          vOffset: 0,
+          scale: 1
+        },
         mobile: {
           show: true,
           scale: 0.6
@@ -404,8 +395,6 @@
 
       /* ------------------------------------------------------------------------
          3. GitHub 仓库子文件夹自动爬虫配置 (githubCrawler)
-         - 部署在 *.github.io 时会自动识别 owner 与 repo；
-         - 若使用自定义域名或本地调试，可手动填写 owner (如 "ToukaSatomi") 与 repo。
          ------------------------------------------------------------------------ */
       githubCrawler: {
         autoDetectFromDomain: true,
@@ -415,7 +404,7 @@
       },
 
       /* ------------------------------------------------------------------------
-         4. 四大分区目录元信息（不包含任何预设示例文章）
+         4. 四大分区目录元信息
          ------------------------------------------------------------------------ */
       sections: {
         tech: {
@@ -570,8 +559,8 @@
        核心交互逻辑：
        1. 背景图片按权重随机抽取 (pickWeightedBackground)
        2. 随机句子抽取 (pickRandomQuote)
-       3. 子文件夹＝单篇文章/游戏子页面自动爬取与解析
-       4. 右下角纯净 Live2D 模型加载 (initLive2D)
+       3. 子文件夹＝单篇文章/游戏子页面自动爬取与解析（兼容本地服务器与 GitHub API）
+       4. 右下角纯净 Live2D 模型加载与上半身等比放大 (initLive2D)
        ========================================================================== */
     (function initBlog() {
       const quoteTextEl = document.getElementById("randomQuoteText");
@@ -765,7 +754,7 @@
 
       if (copyEmailBtn) {
         copyEmailBtn.addEventListener("click", function () {
-          const email = copyEmailBtn.getAttribute("data-email") || "sharweek@example.com";
+          const email = copyEmailBtn.getAttribute("data-email") || "sharweek@qq.com";
           copyTextToClipboard(email, "已复制邮箱地址：" + email);
         });
       }
@@ -805,67 +794,79 @@
         });
       }
 
-      // 6. 自动识别 GitHub 仓库并爬取每个子文件夹对应的文章/游戏子页面元数据
+      // 6. 自动识别 GitHub 仓库并扫描 /games/.../index.html 等子文件夹与子页面
       function resolveGitHubRepoInfo() {
         const cfg = BLOG_CONFIG.githubCrawler || {};
         let owner = (cfg.owner || "").trim();
         let repo = (cfg.repo || "").trim();
 
-        if ((!owner || !repo) && cfg.autoDetectFromDomain) {
-          const host = window.location.hostname || "";
-          if (host.endsWith(".github.io")) {
-            owner = host.replace(".github.io", "");
-            const pathParts = window.location.pathname.split("/").filter(Boolean);
-            const topFolders = ["tech", "literature", "games", "resources"];
-            if (pathParts.length > 0 && topFolders.indexOf(pathParts[0]) === -1 && !pathParts[0].endsWith(".html")) {
-              repo = pathParts[0];
-            } else {
-              repo = owner + ".github.io";
-            }
+        const host = (window.location.hostname || "").trim();
+        if (cfg.autoDetectFromDomain && host.endsWith(".github.io")) {
+          const detectedOwner = host.replace(/\.github\.io$/i, "");
+          const pathParts = window.location.pathname.split("/").filter(Boolean);
+          const topFolders = ["tech", "literature", "games", "resources"];
+          let detectedRepo = detectedOwner + ".github.io";
+          if (
+            pathParts.length > 0 &&
+            topFolders.indexOf(pathParts[0].toLowerCase()) === -1 &&
+            !/\.html?$/i.test(pathParts[0])
+          ) {
+            detectedRepo = pathParts[0];
           }
+          owner = detectedOwner;
+          repo = detectedRepo;
         }
-        return { owner: owner, repo: repo, branch: cfg.branch || "main" };
+        return { owner: owner, repo: repo, branch: (cfg.branch || "").trim() };
       }
 
-      async function fetchSubpageMeta(folderObj, sectionData) {
-        const subpageUrl = "./" + folderObj.path + "/index.html";
-        try {
-          const resp = await fetch(subpageUrl, { method: "GET" });
-          if (resp.ok) {
-            const htmlText = await resp.text();
-            const doc = new DOMParser().parseFromString(htmlText, "text/html");
-            const rawTitle =
-              (doc.querySelector('meta[name="post-title"]') && doc.querySelector('meta[name="post-title"]').getAttribute("content")) ||
-              (doc.querySelector("h1") && doc.querySelector("h1").textContent) ||
-              doc.title ||
-              folderObj.name;
-            const cleanTitle = rawTitle.replace(/\s*\|\s*TM_Sharweek.*$/i, "").trim() || folderObj.name;
-            const desc =
-              (doc.querySelector('meta[name="description"]') && doc.querySelector('meta[name="description"]').getAttribute("content")) ||
-              (doc.querySelector("article p, main p, p") && doc.querySelector("article p, main p, p").textContent.slice(0, 90)) ||
-              ("点击进入 /" + folderObj.path + "/index.html");
-            const date =
-              (doc.querySelector('meta[name="post-date"]') && doc.querySelector('meta[name="post-date"]').getAttribute("content")) ||
-              "已发布";
-            const tagsAttr =
-              (doc.querySelector('meta[name="post-tags"]') && doc.querySelector('meta[name="post-tags"]').getAttribute("content")) || "";
-            const tags = tagsAttr
-              ? tagsAttr.split(",").map(function (t) { return t.trim(); }).filter(Boolean)
-              : [folderObj.name];
+      function parseHtmlMetaFromString(htmlText, fallbackName, relPath, targetUrl) {
+        const doc = new DOMParser().parseFromString(htmlText, "text/html");
+        const rawTitle =
+          (doc.querySelector('meta[name="post-title"]') && doc.querySelector('meta[name="post-title"]').getAttribute("content")) ||
+          (doc.querySelector("h1") && doc.querySelector("h1").textContent) ||
+          doc.title ||
+          fallbackName;
+        const cleanTitle = rawTitle.replace(/\s*\|\s*TM_Sharweek.*$/i, "").trim() || fallbackName;
+        const desc =
+          (doc.querySelector('meta[name="description"]') && doc.querySelector('meta[name="description"]').getAttribute("content")) ||
+          (doc.querySelector("article p, main p, p") && doc.querySelector("article p, main p, p").textContent.trim().slice(0, 90)) ||
+          ("点击进入 /" + relPath);
+        const date =
+          (doc.querySelector('meta[name="post-date"]') && doc.querySelector('meta[name="post-date"]').getAttribute("content")) ||
+          "已发布";
+        const tagsAttr =
+          (doc.querySelector('meta[name="post-tags"]') && doc.querySelector('meta[name="post-tags"]').getAttribute("content")) || "";
+        const tags = tagsAttr
+          ? tagsAttr.split(",").map(function (t) { return t.trim(); }).filter(Boolean)
+          : [fallbackName];
 
-            return {
-              name: folderObj.name,
-              path: folderObj.path,
-              targetUrl: subpageUrl,
-              articleTitle: cleanTitle,
-              date: date,
-              tags: tags,
-              desc: desc
-            };
-          }
-        } catch (e) {
-          // 若子文件夹下尚未放置 index.html，则使用子文件夹名称作为标题
+        return {
+          name: fallbackName,
+          path: relPath,
+          targetUrl: targetUrl,
+          articleTitle: cleanTitle,
+          date: date,
+          tags: tags,
+          desc: desc
+        };
+      }
+
+      async function fetchSubpageMeta(folderObj, rawFallbackUrl) {
+        const subpageUrl = folderObj.targetUrl || ("./" + folderObj.path + "/index.html");
+        const urlsToTry = rawFallbackUrl ? [subpageUrl, rawFallbackUrl] : [subpageUrl];
+
+        for (let i = 0; i < urlsToTry.length; i++) {
+          try {
+            const resp = await fetch(urlsToTry[i], { method: "GET" });
+            if (resp.ok) {
+              const htmlText = await resp.text();
+              if (!/Index of \//i.test(htmlText) && !/<title>Directory listing for/i.test(htmlText)) {
+                return parseHtmlMetaFromString(htmlText, folderObj.name, folderObj.path, subpageUrl);
+              }
+            }
+          } catch (e) {}
         }
+
         return {
           name: folderObj.name,
           path: folderObj.path,
@@ -873,14 +874,102 @@
           articleTitle: folderObj.name,
           date: "子页面",
           tags: [folderObj.name],
-          desc: "点击打开 /" + folderObj.path + "/index.html"
+          desc: "点击打开 " + subpageUrl
         };
+      }
+
+      // 本地开发服务器目录扫描 (Live Server / python -m http.server)
+      async function tryScanLocalServerDirectory(folderName) {
+        if (window.location.protocol === "file:") return null;
+        try {
+          const dirUrl = "./" + folderName + "/";
+          const resp = await fetch(dirUrl, { method: "GET" });
+          if (!resp.ok) return null;
+          const html = await resp.text();
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const isDirListing =
+            /Index of/i.test(doc.title) ||
+            /Directory listing/i.test(doc.title) ||
+            doc.querySelector("ul#files, table, pre a");
+          if (!isDirListing && doc.querySelector(".glass-main-frame")) {
+            return null;
+          }
+
+          const links = Array.from(doc.querySelectorAll("a[href]"));
+          const entries = [];
+          const seen = new Set();
+
+          for (let i = 0; i < links.length; i++) {
+            const rawHref = links[i].getAttribute("href") || "";
+            if (
+              !rawHref ||
+              rawHref.startsWith("?") ||
+              rawHref.startsWith("#") ||
+              rawHref === "../" ||
+              rawHref === "/" ||
+              rawHref.startsWith("http://") ||
+              rawHref.startsWith("https://")
+            ) {
+              continue;
+            }
+            let cleaned = decodeURIComponent(rawHref).replace(/^\.?\//, "");
+            const prefix = folderName + "/";
+            const idx = cleaned.toLowerCase().indexOf(prefix.toLowerCase());
+            if (idx !== -1) cleaned = cleaned.slice(idx + prefix.length);
+            if (!cleaned || cleaned === ".." || cleaned.startsWith("..")) continue;
+
+            const isSubDir = cleaned.endsWith("/");
+            const cleanName = cleaned.replace(/\/+$/, "");
+            if (!cleanName || cleanName.startsWith(".")) continue;
+            if (!isSubDir && cleanName.toLowerCase() === "index.html") continue;
+
+            if (!isSubDir && /\.html?$/i.test(cleanName)) {
+              const relPath = folderName + "/" + cleanName;
+              if (!seen.has(relPath)) {
+                seen.add(relPath);
+                entries.push({
+                  name: cleanName.replace(/\.html?$/i, ""),
+                  path: relPath,
+                  targetUrl: "./" + relPath
+                });
+              }
+            } else if (isSubDir || !/\.[a-z0-9]+$/i.test(cleanName)) {
+              const subPath = folderName + "/" + cleanName;
+              if (!seen.has(subPath)) {
+                seen.add(subPath);
+                entries.push({
+                  name: cleanName,
+                  path: subPath,
+                  targetUrl: "./" + subPath + "/index.html"
+                });
+              }
+            }
+          }
+
+          if (entries.length === 0) return null;
+          const enriched = await Promise.all(entries.map(function (entry) {
+            return fetchSubpageMeta(entry, null);
+          }));
+          return {
+            source: "已从本地目录 /" + folderName + " 自动获取子页面",
+            items: enriched
+          };
+        } catch (e) {
+          return null;
+        }
       }
 
       async function crawlSubfoldersAsArticles(sectionKey, sectionData) {
         const folderName = sectionData.folder || sectionKey;
-        const gh = resolveGitHubRepoInfo();
 
+        // 1. 优先尝试直接从当前站点/本地服务器目录读取 (无需 push 到 GitHub 也能在本地 Live Server 扫出 games/.../index.html)
+        const localRes = await tryScanLocalServerDirectory(folderName);
+        if (localRes && localRes.items.length > 0) {
+          return localRes;
+        }
+
+        // 2. 通过 GitHub Git Trees 递归 API 与 Contents API 扫描线上仓库
+        const gh = resolveGitHubRepoInfo();
         if (!gh.owner || !gh.repo) {
           return {
             source: "未检测到 GitHub Pages 域名（可在 BLOG_CONFIG.githubCrawler 中填写 owner 与 repo）",
@@ -888,11 +977,83 @@
           };
         }
 
+        // 2A. 先用 Git Trees 递归 API (支持任意层级 games/.../index.html，自动兼容 HEAD / main / master)
+        const refsToTry = gh.branch ? [gh.branch, "HEAD"] : ["HEAD"];
+        for (let r = 0; r < refsToTry.length; r++) {
+          const ref = refsToTry[r];
+          const treeUrl = "https://api.github.com/repos/" +
+            encodeURIComponent(gh.owner) + "/" +
+            encodeURIComponent(gh.repo) + "/git/trees/" +
+            encodeURIComponent(ref) + "?recursive=1";
+          try {
+            const resp = await fetch(treeUrl, {
+              headers: { "Accept": "application/vnd.github.v3+json" }
+            });
+            if (resp.ok) {
+              const data = await resp.json();
+              if (data && Array.isArray(data.tree)) {
+                const prefixLower = folderName.toLowerCase() + "/";
+                const entries = [];
+                const coveredDirs = new Set();
+
+                data.tree.forEach(function (node) {
+                  if (node.type !== "blob" || !node.path) return;
+                  const p = node.path;
+                  const pLower = p.toLowerCase();
+                  if (!pLower.startsWith(prefixLower)) return;
+                  const rest = p.slice(prefixLower.length);
+                  const parts = rest.split("/").filter(Boolean);
+                  if (parts.length >= 2 && parts[parts.length - 1].toLowerCase() === "index.html") {
+                    const subDirRel = p.slice(0, p.length - "/index.html".length);
+                    const subName = parts.slice(0, -1).join("/");
+                    coveredDirs.add(subDirRel.toLowerCase());
+                    entries.push({
+                      name: subName,
+                      path: subDirRel,
+                      targetUrl: "./" + p,
+                      rawUrl: "https://raw.githubusercontent.com/" + gh.owner + "/" + gh.repo + "/" + (data.sha || ref) + "/" + p
+                    });
+                  }
+                });
+
+                data.tree.forEach(function (node) {
+                  if (node.type !== "blob" || !node.path) return;
+                  const p = node.path;
+                  const pLower = p.toLowerCase();
+                  if (!pLower.startsWith(prefixLower) || !/\.html?$/i.test(pLower)) return;
+                  const rest = p.slice(prefixLower.length);
+                  const parts = rest.split("/").filter(Boolean);
+                  if (parts[parts.length - 1].toLowerCase() === "index.html") return;
+                  const parentDir = parts.length > 1 ? p.slice(0, p.lastIndexOf("/")) : "";
+                  if (parentDir && coveredDirs.has(parentDir.toLowerCase())) return;
+                  const baseName = parts[parts.length - 1].replace(/\.html?$/i, "");
+                  entries.push({
+                    name: baseName,
+                    path: parentDir || p,
+                    targetUrl: "./" + p,
+                    rawUrl: "https://raw.githubusercontent.com/" + gh.owner + "/" + gh.repo + "/" + (data.sha || ref) + "/" + p
+                  });
+                });
+
+                if (entries.length > 0) {
+                  const enriched = await Promise.all(entries.map(function (entry) {
+                    return fetchSubpageMeta(entry, entry.rawUrl);
+                  }));
+                  return {
+                    source: "已从 GitHub 仓库 /" + folderName + " 目录自动获取子页面",
+                    items: enriched
+                  };
+                }
+              }
+            }
+          } catch (err) {}
+        }
+
+        // 2B. 兜底使用 Contents API
         const apiUrl = "https://api.github.com/repos/" +
           encodeURIComponent(gh.owner) + "/" +
           encodeURIComponent(gh.repo) + "/contents/" +
-          encodeURIComponent(folderName) +
-          (gh.branch ? "?ref=" + encodeURIComponent(gh.branch) : "");
+          encodeURIComponent(folderName);
 
         try {
           const resp = await fetch(apiUrl, {
@@ -905,7 +1066,7 @@
                 return item.type === "dir";
               });
               const enriched = await Promise.all(subDirs.map(function (dir) {
-                return fetchSubpageMeta({ name: dir.name, path: dir.path }, sectionData);
+                return fetchSubpageMeta({ name: dir.name, path: dir.path, targetUrl: "./" + dir.path + "/index.html" }, null);
               }));
               return {
                 source: "已从 GitHub 仓库 /" + folderName + " 目录自动获取子文件夹",
@@ -914,7 +1075,7 @@
             }
           } else if (resp.status === 404) {
             return {
-              source: "仓库中尚未创建 /" + folderName + " 文件夹",
+              source: "GitHub 仓库 (" + gh.owner + "/" + gh.repo + ") 中尚未推送 /" + folderName + " 文件夹",
               items: []
             };
           }
@@ -940,7 +1101,7 @@
           emptyCard.innerHTML =
             '<p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.7;">' +
               "当前 <code>/" + sectionData.folder + "</code> 目录下暂无已爬取到的子文件夹。<br/>" +
-              "部署至 GitHub Pages（或在 <code>BLOG_CONFIG.githubCrawler</code> 中填入你的 <code>owner</code> 和 <code>repo</code>）并在仓库中创建如 <code>/" + sectionData.folder + "/子文件夹名/index.html</code> 后，此处会自动生成对应的毛玻璃跳转按钮。" +
+              "请确认已将 <code>/" + sectionData.folder + "/子文件夹名/index.html</code> 提交并 <code>git push</code> 到 GitHub 仓库（或在本地使用 Live Server 打开）。" +
             "</p>";
           subpageContent.appendChild(emptyCard);
           return;
@@ -1029,7 +1190,7 @@
 
       backHomeBtn.addEventListener("click", returnHome);
 
-      // 7. 右下角纯净 Live2D 模型加载器 (无额外悬浮按钮或台词气泡)
+      // 7. 右下角纯净 Live2D 模型加载与上半身等比放大 (同时针对 oh-my-live2d 的 #oml2d-stage/#oml2d-canvas 与 l2dwidget 强制挂载)
       function loadExternalScript(src) {
         return new Promise(function (resolve, reject) {
           const s = document.createElement("script");
@@ -1041,6 +1202,48 @@
         });
       }
 
+      function applyLive2DUpperBodyZoom(disp) {
+        const boxW = (disp.width || 280) + "px";
+        const boxH = (disp.boxHeight || 300) + "px";
+        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 1.9;
+        const anchorY = disp.anchorY || "18%";
+        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "0px");
+
+        const rootStyle = document.documentElement.style;
+        rootStyle.setProperty("--live2d-box-width", boxW);
+        rootStyle.setProperty("--live2d-box-height", boxH);
+        rootStyle.setProperty("--live2d-zoom", String(zoom));
+        rootStyle.setProperty("--live2d-anchor-y", anchorY);
+        rootStyle.setProperty("--live2d-shift-y", shiftY);
+
+        function syncDomStyles() {
+          const stages = document.querySelectorAll("#oml2d-stage, .oml2d-stage, #live2d-widget, .live2d-widget-container");
+          stages.forEach(function (st) {
+            st.style.setProperty("position", "fixed", "important");
+            st.style.setProperty("right", (typeof disp.hOffset === "number" ? disp.hOffset : 12) + "px", "important");
+            st.style.setProperty("bottom", (typeof disp.vOffset === "number" ? disp.vOffset : 0) + "px", "important");
+            st.style.setProperty("left", "auto", "important");
+            st.style.setProperty("width", boxW, "important");
+            st.style.setProperty("height", boxH, "important");
+            st.style.setProperty("overflow", "hidden", "important");
+          });
+
+          const canvases = document.querySelectorAll("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
+          canvases.forEach(function (cvs) {
+            cvs.style.setProperty("transform-origin", "50% " + anchorY, "important");
+            cvs.style.setProperty("transform", "translateY(" + shiftY + ") scale(" + zoom + ")", "important");
+          });
+        }
+
+        syncDomStyles();
+        let count = 0;
+        const timer = setInterval(function () {
+          syncDomStyles();
+          count++;
+          if (count > 30) clearInterval(timer);
+        }, 200);
+      }
+
       async function initLive2D() {
         const cfg = BLOG_CONFIG.live2d;
         if (!cfg || !cfg.enabled || !cfg.modelJsonUrl) return;
@@ -1049,17 +1252,32 @@
         const mob = cfg.mobile || {};
         const react = cfg.react || {};
 
+        applyLive2DUpperBodyZoom(disp);
+
         try {
           if (cfg.engine === "oml2d") {
             await loadExternalScript(cfg.oml2dScriptUrl || "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js");
             if (window.OML2D && typeof window.OML2D.loadOml2d === "function") {
-              window.OML2D.loadOml2d({
+              const omlInstance = window.OML2D.loadOml2d({
                 dockedPosition: "right",
                 menus: { disable: true },
                 tips: { disable: true },
                 statusBar: { disable: true },
-                models: [{ path: cfg.modelJsonUrl }]
+                models: [
+                  {
+                    path: cfg.modelJsonUrl,
+                    stageStyle: {
+                      width: disp.width || 280,
+                      height: disp.height || 500
+                    }
+                  }
+                ]
               });
+              if (omlInstance && typeof omlInstance.onLoad === "function") {
+                omlInstance.onLoad(function () {
+                  applyLive2DUpperBodyZoom(disp);
+                });
+              }
             }
           } else {
             await loadExternalScript(cfg.scriptUrl || "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js");
@@ -1071,10 +1289,10 @@
                 },
                 display: {
                   position: disp.position || "right",
-                  width: disp.width || 190,
-                  height: disp.height || 340,
-                  hOffset: typeof disp.hOffset === "number" ? disp.hOffset : 16,
-                  vOffset: typeof disp.vOffset === "number" ? disp.vOffset : -15
+                  width: disp.width || 280,
+                  height: disp.height || 500,
+                  hOffset: typeof disp.hOffset === "number" ? disp.hOffset : 12,
+                  vOffset: typeof disp.vOffset === "number" ? disp.vOffset : 0
                 },
                 mobile: {
                   show: mob.show !== false,
@@ -1087,9 +1305,8 @@
               });
             }
           }
-        } catch (err) {
-          // 离线或未联网时静默忽略
-        }
+          applyLive2DUpperBodyZoom(disp);
+        } catch (err) {}
       }
 
       initLive2D();
