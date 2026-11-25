@@ -6,7 +6,7 @@
   <title>TM_Sharweek | Personal Blog</title>
   <meta name="description" content="TM_Sharweek 个人站点 —— 技术博客、文学作品、迷你游戏与资源仓库" />
   <!-- 统一引用根目录独立样式表 style.css -->
-  <link rel="stylesheet" href="./style.css?v=20261125" />
+  <link rel="stylesheet" href="./style.css?v=20261125b" />
 </head>
 <body>
 
@@ -392,10 +392,10 @@
           width: 280,
           height: 300,
           boxHeight: 300,
-          upperZoom: 2.6,
+          upperZoom: 2.25,
           anchorY: "0%",
-          shiftX: "12px",
-          shiftY: "32px",
+          shiftX: "10px",
+          shiftY: "20px",
           hOffset: 12,
           vOffset: 0,
           scale: 1
@@ -697,7 +697,7 @@
         '  <meta name="description" content="在此填写简短摘要，主页会自动抓取并显示在毛玻璃按钮上。" />',
         '  <meta name="post-date" content="2026-11-22" />',
         '  <meta name="post-tags" content="标签1,标签2" />',
-        '  <link rel="stylesheet" href="../../style.css?v=20261125" />',
+        '  <link rel="stylesheet" href="../../style.css?v=20261125b" />',
         "</head>",
         "<body>",
         '  <main class="main-stage">',
@@ -1110,10 +1110,10 @@
       function applyLive2DUpperBodyZoom(disp) {
         const boxW = (disp.width || 280) + "px";
         const boxH = (disp.boxHeight || 300) + "px";
-        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 2.6;
+        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 2.25;
         const anchorY = disp.anchorY || "0%";
-        const shiftX = typeof disp.shiftX === "number" ? (disp.shiftX + "px") : (disp.shiftX || "12px");
-        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "32px");
+        const shiftX = typeof disp.shiftX === "number" ? (disp.shiftX + "px") : (disp.shiftX || "10px");
+        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "20px");
 
         const rootStyle = document.documentElement.style;
         rootStyle.setProperty("--live2d-box-width", boxW);
