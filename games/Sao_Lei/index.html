@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>无猜扫雷 | TM_Sharweek</title>
+  <meta name="post-title" content="无猜扫雷" />
+  <meta name="description" content="100%纯逻辑可解无猜扫雷游戏，内置不等式子集约束求解器、3D碎块崩飞与激光锁定特效" />
+  <meta name="post-date" content="2026-11-25" />
+  <meta name="post-tags" content="无猜扫雷,逻辑推理" />
+  <link rel="stylesheet" href="../../style.css?v=20261125e" />
+  <link rel="stylesheet" href="./style.css?v=20261125e" />
+  <style>
+    /* 紧凑一屏布局兜底（防止旧版缓存 style.css 导致错位，电脑端一屏免滚动） */
+    .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
+    .glass-main-frame.game-mines-frame { max-width: 860px; padding: 15px 22px; }
+    .game-top-bar { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.72); }
+    .game-title-group, .top-action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; }
+    .game-logo-badge { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg,#2563eb,#0ea5e9); color: #fff; font-weight: 800; font-size: 1.08rem; display: flex; align-items: center; justify-content: center; }
+    .game-title-text h1 { font-size: 1.26rem; font-weight: 800; line-height: 1.2; }
+    .hud-stats-row { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .hud-stat-card { padding: 7px 14px; border-radius: 14px; background: rgba(255,255,255,0.58); border: 1px solid rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: flex-start; }
+    .hud-stat-label { font-size: 0.72rem; font-weight: 700; color: #475569; }
+    .hud-stat-value { font-family: var(--font-mono, monospace); font-size: 1.22rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-top: 2px; }
+    .hud-stat-value.accent { color: #2563eb; }
+    .hud-stat-value.is-bumping { animation: hudScoreBump 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes hudScoreBump { 0% { transform: scale(1); } 45% { transform: scale(1.24); color: #2563eb; } 100% { transform: scale(1); } }
+    .mines-board-card { position: relative; width: 100%; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); padding: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+    #minesCanvas { display: block; max-width: 100%; height: auto; border-radius: 14px; cursor: pointer; touch-action: none; }
+    .back-home-btn.is-active-mode { background: rgba(239,246,255,0.95); color: #2563eb; border-color: rgba(37,99,235,0.55); box-shadow: 0 0 0 2px rgba(37,99,235,0.18); }
+    .gameover-overlay { position: absolute; inset: 12px; border-radius: 18px; background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.28s ease; z-index: 40; }
+    .gameover-overlay.is-visible { opacity: 1; visibility: visible; }
+    @media (min-width: 641px) and (min-height: 580px) { html, body { height: 100vh; overflow: hidden; } .main-stage.game-page-stage { height: 100vh; } }
+    @media (max-width: 640px) { .hud-stats-row { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+</head>
+<body>
+
+  <main class="main-stage game-page-stage">
+    <div class="glass-main-frame game-page-frame game-mines-frame">
+      <!-- 1. 顶部操作栏 -->
+      <header class="game-top-bar">
+        <div class="game-title-group">
+          <div class="game-logo-badge">💣</div>
+          <div class="game-title-text">
+            <h1>无猜扫雷</h1>
+          </div>
+        </div>
+
+        <div class="top-action-group">
+          <button type="button" data-diff="easy" class="back-home-btn diff-btn is-active-mode" title="初级 9×9 · 10雷 (纯逻辑无猜)">
+            初级
+          </button>
+          <button type="button" data-diff="medium" class="back-home-btn diff-btn" title="中级 11×16 · 26雷 (纯逻辑无猜)">
+            中级
+          </button>
+          <button type="button" data-diff="hard" class="back-home-btn diff-btn" title="高级 13×21 · 44雷 (纯逻辑无猜)">
+            高级
+          </button>
+          <button type="button" id="flagModeBtn" class="back-home-btn" title="切换左键翻开 / 左键插旗模式 (快捷键: F)">
+            ⛏ 翻开
+          </button>
+          <button type="button" id="logicHintBtn" class="back-home-btn" title="使用内置逻辑求解器高亮一步必然安全或必雷格 (快捷键: H)">
+            💡 提示 (H)
+          </button>
+          <button type="button" id="randomBgBtn" class="back-home-btn" title="按设定权重随机切换背景图">
+            🎲 <span id="currentBgLabel">背景</span>
+          </button>
+          <button type="button" id="toggleSoundBtn" class="back-home-btn" title="开关音效 (快捷键: M)">
+            🔊
+          </button>
+          <button type="button" id="restartGameBtn" class="back-home-btn" title="重新开始新对局 (快捷键: R)">
+            ↻ 重开
+          </button>
+          <a href="../../index.html" id="backBlogHomeBtn" class="back-home-btn is-primary">
+            ← 返回主页
+          </a>
+        </div>
+      </header>
+
+      <!-- 2. 四项计分与统计数据栏 -->
+      <section class="hud-stats-row" aria-label="游戏数据面板">
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">剩余雷数 / MINES</span>
+          <span id="minesLeftValue" class="hud-stat-value accent">10</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">当前用时 / TIME</span>
+          <span id="timerValue" class="hud-stat-value">0.0s</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">安全进度 / PROGRESS</span>
+          <span id="progressValue" class="hud-stat-value">0%</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最快纪录 / BEST</span>
+          <span id="bestTimeValue" class="hud-stat-value">--</span>
+        </div>
+      </section>
+
+      <!-- 3. 无猜扫雷主画布 -->
+      <section class="mines-board-card" aria-label="无猜扫雷棋盘区">
+        <div class="mines-canvas-wrap">
+          <canvas id="minesCanvas" width="756" height="390" aria-label="无猜扫雷交互棋盘"></canvas>
+        </div>
+
+        <div id="gameOverOverlay" class="gameover-overlay" role="dialog" aria-modal="true">
+          <h2 id="gameOverTitle">扫雷完成！</h2>
+          <p id="gameOverSummary"></p>
+          <button type="button" id="overlayRestartBtn" class="back-home-btn is-primary" style="padding: 9px 22px; font-size: 0.9rem;">
+            ↻ 再来一局
+          </button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div id="toastNotice" class="toast-notice" role="status" aria-live="polite"></div>
+
+  <script>
+    const BLOG_CONFIG = {
+      backgrounds: [
+        { name: "阿绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/t55ghywt.png", weight: 13 },
+        { name: "二重变革", url: "https://cdn.luogu.com.cn/upload/image_hosting/5c26cnb1.png", weight: 3 },
+        { name: "月巷", url: "https://cdn.luogu.com.cn/upload/image_hosting/hjqw3cv3.png", weight: 1 },
+        { name: "九重现实", url: "https://cdn.luogu.com.cn/upload/image_hosting/9qdrt0hk.png", weight: 1 },
+        { name: "傲娇绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/cuna6iak.png", weight: 1 },
+        { name: "五重空洞", url: "https://cdn.luogu.com.cn/upload/image_hosting/rpd6v91b.png", weight: 1 },
+        { name: "世末绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/nw1msrkd.png", weight: 1 },
+        { name: "世末歌者", url: "https://cdn.luogu.com.cn/upload/image_hosting/kut13cln.png", weight: 1 },
+        { name: "小焰", url: "https://cdn.luogu.com.cn/upload/image_hosting/s57te7ko.png", weight: 1 },
+        { name: "待我归乡", url: "https://cdn.luogu.com.cn/upload/image_hosting/vgphr83p.png", weight: 1 },
+        { name: "遗忘的物语", url: "https://cdn.luogu.com.cn/upload/image_hosting/ksdftve2.png", weight: 1 },
+        { name: "病房组", url: "https://cdn.luogu.com.cn/upload/image_hosting/a4j7q31r.png", weight: 1 }
+      ],
+
+      live2d: {
+        enabled: true,
+        engine: "oml2d",
+        scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
+        oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
+        modelJsonUrl: "../../102800/model.model3.json",
+        display: {
+          position: "right",
+          width: 280,
+          height: 300,
+          boxHeight: 300,
+          upperZoom: 2.25,
+          anchorY: "0%",
+          shiftX: "10px",
+          shiftY: "20px",
+          hOffset: 12,
+          vOffset: 0,
+          scale: 1
+        },
+        mobile: { show: true, scale: 0.6 },
+        react: { opacityDefault: 0.95, opacityOnHover: 1 }
+      }
+    };
+
+    (function initNoGuessMinesweeper() {
+      const DIFFICULTIES = {
+        easy:   { key: "easy",   name: "初级", rows: 9,  cols: 9,  mines: 10, cellSize: 41 },
+        medium: { key: "medium", name: "中级", rows: 11, cols: 16, mines: 26, cellSize: 34 },
+        hard:   { key: "hard",   name: "高级", rows: 13, cols: 21, mines: 44, cellSize: 29 }
+      };
+
+      const NUM_COLORS = [
+        "",
+        "#2563eb", // 1: 宝蓝
+        "#059669", // 2: 翠绿
+        "#dc2626", // 3: 绯红
+        "#7c3aed", // 4: 紫罗兰
+        "#b45309", // 5: 琥珀棕
+        "#0891b2", // 6: 青碧
+        "#1e293b", // 7: 墨黑
+        "#64748b"  // 8: 岩石灰
+      ];
+
+      const canvas = document.getElementById("minesCanvas");
+      const ctx = canvas.getContext("2d");
+      const minesLeftValueEl = document.getElementById("minesLeftValue");
+      const timerValueEl = document.getElementById("timerValue");
+      const progressValueEl = document.getElementById("progressValue");
+      const bestTimeValueEl = document.getElementById("bestTimeValue");
+      const flagModeBtn = document.getElementById("flagModeBtn");
+      const logicHintBtn = document.getElementById("logicHintBtn");
+      const restartGameBtn = document.getElementById("restartGameBtn");
+      const overlayRestartBtn = document.getElementById("overlayRestartBtn");
+      const toggleSoundBtn = document.getElementById("toggleSoundBtn");
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
+      const gameOverTitle = document.getElementById("gameOverTitle");
+      const gameOverSummary = document.getElementById("gameOverSummary");
+      const toastNotice = document.getElementById("toastNotice");
+      const diffBtns = document.querySelectorAll(".diff-btn");
+
+      let currentDiff = DIFFICULTIES.easy;
+      let rows = currentDiff.rows;
+      let cols = currentDiff.cols;
+      let totalMines = currentDiff.mines;
+      let cellSize = currentDiff.cellSize;
+
+      let minesGrid = [];
+      let numbersGrid = [];
+      let revealedGrid = [];
+      let flaggedGrid = [];
+      let revealAnimTime = [];
+      let cellBounce = []; // 邻格震动回弹强度
+
+      let isFirstClick = true;
+      let isGameOver = false;
+      let isWin = false;
+      let flagMode = false;
+      let revealedSafeCount = 0;
+      let flagsCount = 0;
+      let hoverCell = null;
+      let activeHint = null;
+      let explodedCell = null;
+
+      // 连击与打击感状态
+      let sweepCombo = 0;
+      let lastActionTime = 0;
+      let screenShake = 0;
+
+      // 物理特效队列：3D崩飞砖块、星芒粒子、光环冲击波、激光十字锁定、浮动飘字
+      let ejectedCaps = [];
+      let particles = [];
+      let shockwaves = [];
+      let laserCrosshairs = [];
+      let floatingLabels = [];
+
+      let startTimeMs = 0;
+      let elapsedSec = 0;
+      let timerRunning = false;
+
+      let soundEnabled = true;
+      let audioCtx = null;
+      let toastTimer = null;
+
+      function showToast(msg) {
+        if (!toastNotice) return;
+        toastNotice.textContent = msg;
+        toastNotice.classList.add("is-visible");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastNotice.classList.remove("is-visible");
+        }, 2300);
+      }
+
+      function triggerHudBump(el) {
+        if (!el) return;
+        el.classList.remove("is-bumping");
+        void el.offsetWidth;
+        el.classList.add("is-bumping");
+      }
+
+      // Web Audio 合成音效（支持连击升调、激光锁定声、和弦爆发声）
+      function playTone(freq, duration, type, gainVal, delaySec) {
+        if (!soundEnabled) return;
+        try {
+          if (!audioCtx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            audioCtx = new AC();
+          }
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          const start = audioCtx.currentTime + (delaySec || 0);
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type || "sine";
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(gainVal || 0.1, start);
+          gain.gain.exponentialRampToValueAtTime(0.001, start + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(start);
+          osc.stop(start + duration);
+        } catch (e) {}
+      }
+
+      function sfxReveal(cascadeCount, combo) {
+        const comboPitch = Math.min(260, combo * 24);
+        const base = 340 + Math.min(220, cascadeCount * 12) + comboPitch;
+        playTone(base, 0.075, "triangle", 0.11, 0);
+        playTone(base * 1.25, 0.085, "sine", 0.08, 0.025);
+        if (cascadeCount >= 5) {
+          playTone(base * 1.5, 0.12, "triangle", 0.1, 0.055);
+          playTone(base * 2.0, 0.14, "sine", 0.08, 0.09);
+        }
+      }
+
+      function sfxChord(count) {
+        playTone(220, 0.09, "triangle", 0.13, 0);
+        playTone(440, 0.11, "triangle", 0.12, 0.025);
+        playTone(660 + count * 30, 0.14, "sine", 0.11, 0.055);
+      }
+
+      function sfxFlag(placed) {
+        if (placed) {
+          playTone(580, 0.05, "triangle", 0.1, 0);
+          playTone(860, 0.07, "sine", 0.09, 0.03);
+        } else {
+          playTone(420, 0.06, "sine", 0.08, 0);
+        }
+      }
+
+      function sfxBoom() {
+        playTone(130, 0.28, "sawtooth", 0.16, 0);
+        playTone(85, 0.38, "sawtooth", 0.16, 0.07);
+      }
+
+      function sfxWin() {
+        [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach(function (f, idx) {
+          playTone(f, 0.2, "triangle", 0.13, idx * 0.055);
+        });
+      }
+
+      // 物理与视觉打击感生成器
+      function spawnEjectedCap(r, c, delayMs, isChord) {
+        const cx = c * cellSize + cellSize / 2;
+        const cy = r * cellSize + cellSize / 2;
+        ejectedCaps.push({
+          x: cx,
+          y: cy,
+          vx: (Math.random() - 0.5) * (isChord ? 5.2 : 3.6),
+          vy: -(2.2 + Math.random() * (isChord ? 3.8 : 2.6)),
+          gravity: 0.26,
+          size: cellSize * 0.78,
+          rot: 0,
+          vRot: (Math.random() - 0.5) * 0.28,
+          alpha: 0.92,
+          delay: delayMs || 0,
+          born: performance.now(),
+          color: isChord ? "rgba(191, 219, 254, 0.92)" : "rgba(255, 255, 255, 0.9)"
+        });
+      }
+
+      function spawnCellParticles(r, c, color, count, speedScale) {
+        const cx = c * cellSize + cellSize / 2;
+        const cy = r * cellSize + cellSize / 2;
+        const sc = speedScale || 1;
+        const shapes = ["star", "circle", "diamond"];
+        for (let i = 0; i < count; i++) {
+          const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+          const spd = (1.4 + Math.random() * 3.2) * sc;
+          particles.push({
+            x: cx,
+            y: cy,
+            vx: Math.cos(ang) * spd,
+            vy: Math.sin(ang) * spd - 0.5,
+            size: 2.8 + Math.random() * 3.2,
+            color: color,
+            alpha: 1,
+            decay: 0.024 + Math.random() * 0.015,
+            rot: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 0.2,
+            shape: shapes[i % shapes.length]
+          });
+        }
+      }
+
+      function spawnShockwave(r, c, color, maxRad, lineW) {
+        shockwaves.push({
+          x: c * cellSize + cellSize / 2,
+          y: r * cellSize + cellSize / 2,
+          radius: cellSize * 0.22,
+          maxRadius: maxRad || cellSize * 1.8,
+          color: color,
+          lineWidth: lineW || 2.8,
+          alpha: 0.92
+        });
+      }
+
+      function spawnLaserCrosshair(r, c, color) {
+        laserCrosshairs.push({
+          x: c * cellSize + cellSize / 2,
+          y: r * cellSize + cellSize / 2,
+          color: color || "#ef4444",
+          alpha: 0.9,
+          radius: cellSize * 0.95
+        });
+      }
+
+      function spawnFloatingLabel(r, c, text, color, size) {
+        floatingLabels.push({
+          x: Math.max(48, Math.min(canvas.width - 48, c * cellSize + cellSize / 2)),
+          y: Math.max(24, r * cellSize + 6),
+          vy: -1.35,
+          text: text,
+          color: color || "#2563eb",
+          size: size || 15,
+          alpha: 1
+        });
+      }
+
+      function triggerRadialCellBounce(centerR, centerC, radiusCells, strength) {
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const d = Math.hypot(r - centerR, c - centerC);
+            if (d <= radiusCells) {
+              const factor = (1 - d / (radiusCells + 0.5)) * strength;
+              cellBounce[r][c] = Math.max(cellBounce[r][c], factor);
+            }
+          }
+        }
+      }
+
+      function getNeighbors(r, c, R, C) {
+        const list = [];
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = r + dr;
+            const nc = c + dc;
+            if (nr >= 0 && nr < R && nc >= 0 && nc < C) {
+              list.push([nr, nc]);
+            }
+          }
+        }
+        return list;
+      }
+
+      function computeNumbersGrid(mGrid, R, C) {
+        const nums = [];
+        for (let r = 0; r < R; r++) {
+          nums.push(new Array(C).fill(0));
+        }
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            if (mGrid[r][c]) {
+              nums[r][c] = -1;
+              continue;
+            }
+            let cnt = 0;
+            const nbs = getNeighbors(r, c, R, C);
+            for (let i = 0; i < nbs.length; i++) {
+              if (mGrid[nbs[i][0]][nbs[i][1]]) cnt++;
+            }
+            nums[r][c] = cnt;
+          }
+        }
+        return nums;
+      }
+
+      /* ========================================================================
+         核心无猜扫雷确定性逻辑求解器 (Deterministic No-Guess Logical Solver)
+         ======================================================================== */
+      function findNextLogicalDeductions(R, C, totalM, numsGrid, knownRevealed, knownFlagged) {
+        const safeList = [];
+        const mineList = [];
+        const safeSet = new Set();
+        const mineSet = new Set();
+
+        function addSafe(r, c, reason) {
+          const k = r + "," + c;
+          if (!safeSet.has(k) && !knownRevealed[r][c] && !knownFlagged[r][c]) {
+            safeSet.add(k);
+            safeList.push({ r: r, c: c, type: "safe", reason: reason });
+          }
+        }
+
+        function addMine(r, c, reason) {
+          const k = r + "," + c;
+          if (!mineSet.has(k) && !knownRevealed[r][c] && !knownFlagged[r][c]) {
+            mineSet.add(k);
+            mineList.push({ r: r, c: c, type: "mine", reason: reason });
+          }
+        }
+
+        const frontier = [];
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            if (!knownRevealed[r][c] || numsGrid[r][c] <= 0) continue;
+            const nbs = getNeighbors(r, c, R, C);
+            let flaggedCnt = 0;
+            const unknowns = [];
+            for (let i = 0; i < nbs.length; i++) {
+              const nr = nbs[i][0];
+              const nc = nbs[i][1];
+              if (knownFlagged[nr][nc]) {
+                flaggedCnt++;
+              } else if (!knownRevealed[nr][nc]) {
+                unknowns.push([nr, nc]);
+              }
+            }
+            if (unknowns.length > 0) {
+              const rem = numsGrid[r][c] - flaggedCnt;
+              if (rem === 0) {
+                unknowns.forEach(function (u) {
+                  addSafe(u[0], u[1], "数字格 (" + (r + 1) + "," + (c + 1) + ") 周围雷数已满，其余邻格必安全");
+                });
+              } else if (rem === unknowns.length) {
+                unknowns.forEach(function (u) {
+                  addMine(u[0], u[1], "数字格 (" + (r + 1) + "," + (c + 1) + ") 剩余未知邻格数等于剩余雷数，必为雷");
+                });
+              }
+              frontier.push({
+                r: r,
+                c: c,
+                rem: rem,
+                unknowns: unknowns,
+                uKeys: new Set(unknowns.map(function (u) { return u[0] + "," + u[1]; }))
+              });
+            }
+          }
+        }
+
+        if (safeList.length > 0 || mineList.length > 0) {
+          return { safeList: safeList, mineList: mineList };
+        }
+
+        // 双格耦合差集不等式推导
+        for (let i = 0; i < frontier.length; i++) {
+          const f1 = frontier[i];
+          for (let j = i + 1; j < frontier.length; j++) {
+            const f2 = frontier[j];
+            if (Math.abs(f1.r - f2.r) > 2 || Math.abs(f1.c - f2.c) > 2) continue;
+
+            const only1 = [];
+            const only2 = [];
+            let sharedCount = 0;
+
+            f1.unknowns.forEach(function (u) {
+              const k = u[0] + "," + u[1];
+              if (f2.uKeys.has(k)) sharedCount++;
+              else only1.push(u);
+            });
+            if (sharedCount === 0) continue;
+
+            f2.unknowns.forEach(function (u) {
+              const k = u[0] + "," + u[1];
+              if (!f1.uKeys.has(k)) only2.push(u);
+            });
+
+            if (f2.rem - f1.rem === only2.length && (only2.length > 0 || only1.length > 0)) {
+              only2.forEach(function (u) {
+                addMine(u[0], u[1], "由 (" + (f1.r + 1) + "," + (f1.c + 1) + ") 与 (" + (f2.r + 1) + "," + (f2.c + 1) + ") 差集约束推导出必为雷");
+              });
+              only1.forEach(function (u) {
+                addSafe(u[0], u[1], "由 (" + (f1.r + 1) + "," + (f1.c + 1) + ") 与 (" + (f2.r + 1) + "," + (f2.c + 1) + ") 差集约束推导出必安全");
+              });
+            }
+
+            if (f1.rem - f2.rem === only1.length && (only1.length > 0 || only2.length > 0)) {
+              only1.forEach(function (u) {
+                addMine(u[0], u[1], "由 (" + (f1.r + 1) + "," + (f1.c + 1) + ") 与 (" + (f2.r + 1) + "," + (f2.c + 1) + ") 差集约束推导出必为雷");
+              });
+              only2.forEach(function (u) {
+                addSafe(u[0], u[1], "由 (" + (f1.r + 1) + "," + (f1.c + 1) + ") 与 (" + (f2.r + 1) + "," + (f2.c + 1) + ") 差集约束推导出必安全");
+              });
+            }
+          }
+        }
+
+        if (safeList.length > 0 || mineList.length > 0) {
+          return { safeList: safeList, mineList: mineList };
+        }
+
+        let totalFlagged = 0;
+        const allUnknowns = [];
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            if (knownFlagged[r][c]) totalFlagged++;
+            else if (!knownRevealed[r][c]) allUnknowns.push([r, c]);
+          }
+        }
+        const remGlobal = totalM - totalFlagged;
+        if (allUnknowns.length > 0) {
+          if (remGlobal === 0) {
+            allUnknowns.forEach(function (u) {
+              addSafe(u[0], u[1], "全局剩余雷数为 0，剩余未翻开格必安全");
+            });
+          } else if (remGlobal === allUnknowns.length) {
+            allUnknowns.forEach(function (u) {
+              addMine(u[0], u[1], "全局剩余未知格数等于剩余雷数，必为雷");
+            });
+          }
+        }
+
+        return { safeList: safeList, mineList: mineList };
+      }
+
+      function verifyAndSolveNoGuess(R, C, totalM, mGrid, numsGrid, startR, startC) {
+        const simRev = [];
+        const simFlag = [];
+        for (let r = 0; r < R; r++) {
+          simRev.push(new Array(C).fill(false));
+          simFlag.push(new Array(C).fill(false));
+        }
+
+        let safeRevealed = 0;
+        const totalSafe = R * C - totalM;
+
+        function floodRevealSim(sr, sc) {
+          const stack = [[sr, sc]];
+          while (stack.length > 0) {
+            const curr = stack.pop();
+            const cr = curr[0];
+            const cc = curr[1];
+            if (simRev[cr][cc] || simFlag[cr][cc] || mGrid[cr][cc]) continue;
+            simRev[cr][cc] = true;
+            safeRevealed++;
+            if (numsGrid[cr][cc] === 0) {
+              const nbs = getNeighbors(cr, cc, R, C);
+              for (let i = 0; i < nbs.length; i++) {
+                const nr = nbs[i][0];
+                const nc = nbs[i][1];
+                if (!simRev[nr][nc] && !simFlag[nr][nc]) {
+                  stack.push([nr, nc]);
+                }
+              }
+            }
+          }
+        }
+
+        floodRevealSim(startR, startC);
+
+        while (safeRevealed < totalSafe) {
+          const step = findNextLogicalDeductions(R, C, totalM, numsGrid, simRev, simFlag);
+          if (step.safeList.length === 0 && step.mineList.length === 0) {
+            return { solved: false, simRev: simRev, simFlag: simFlag };
+          }
+          for (let i = 0; i < step.mineList.length; i++) {
+            const m = step.mineList[i];
+            simFlag[m.r][m.c] = true;
+          }
+          for (let i = 0; i < step.safeList.length; i++) {
+            const s = step.safeList[i];
+            floodRevealSim(s.r, s.c);
+          }
+        }
+
+        return { solved: true, simRev: simRev, simFlag: simFlag };
+      }
+
+      function generateNoGuessBoard(R, C, totalM, startR, startC) {
+        function isProtectedStartZone(r, c) {
+          return Math.abs(r - startR) <= 1 && Math.abs(c - startC) <= 1;
+        }
+
+        const candidates = [];
+        for (let r = 0; r < R; r++) {
+          for (let c = 0; c < C; c++) {
+            if (!isProtectedStartZone(r, c)) {
+              candidates.push([r, c]);
+            }
+          }
+        }
+
+        for (let attempt = 0; attempt < 90; attempt++) {
+          for (let i = candidates.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const tmp = candidates[i];
+            candidates[i] = candidates[j];
+            candidates[j] = tmp;
+          }
+
+          const mGrid = [];
+          for (let r = 0; r < R; r++) {
+            mGrid.push(new Array(C).fill(false));
+          }
+          for (let i = 0; i < totalM && i < candidates.length; i++) {
+            mGrid[candidates[i][0]][candidates[i][1]] = true;
+          }
+
+          for (let mut = 0; mut < 16; mut++) {
+            const numsGrid = computeNumbersGrid(mGrid, R, C);
+            const check = verifyAndSolveNoGuess(R, C, totalM, mGrid, numsGrid, startR, startC);
+            if (check.solved) {
+              return { minesGrid: mGrid, numbersGrid: numsGrid };
+            }
+
+            const frontierMines = [];
+            const hiddenSafes = [];
+            for (let r = 0; r < R; r++) {
+              for (let c = 0; c < C; c++) {
+                if (isProtectedStartZone(r, c) || check.simRev[r][c] || check.simFlag[r][c]) continue;
+                const nbs = getNeighbors(r, c, R, C);
+                let touchesRevealed = false;
+                for (let k = 0; k < nbs.length; k++) {
+                  if (check.simRev[nbs[k][0]][nbs[k][1]]) {
+                    touchesRevealed = true;
+                    break;
+                  }
+                }
+                if (mGrid[r][c] && touchesRevealed) {
+                  frontierMines.push([r, c]);
+                } else if (!mGrid[r][c]) {
+                  hiddenSafes.push([r, c]);
+                }
+              }
+            }
+
+            if (frontierMines.length === 0 || hiddenSafes.length === 0) break;
+            const pickMine = frontierMines[Math.floor(Math.random() * frontierMines.length)];
+            const pickSafe = hiddenSafes[Math.floor(Math.random() * hiddenSafes.length)];
+            mGrid[pickMine[0]][pickMine[1]] = false;
+            mGrid[pickSafe[0]][pickSafe[1]] = true;
+          }
+        }
+
+        const fallbackNums = computeNumbersGrid(minesGrid, R, C);
+        return { minesGrid: minesGrid, numbersGrid: fallbackNums };
+      }
+
+      function bestStorageKey(diffKey) {
+        return "tm_sharweek_noguess_mines_best_" + diffKey;
+      }
+
+      function updateHud(bumpProgress) {
+        const rem = Math.max(0, totalMines - flagsCount);
+        minesLeftValueEl.textContent = String(rem);
+        timerValueEl.textContent = elapsedSec.toFixed(1) + "s";
+
+        const totalSafe = rows * cols - totalMines;
+        const pct = totalSafe > 0 ? Math.min(100, Math.floor((revealedSafeCount / totalSafe) * 100)) : 0;
+        progressValueEl.textContent = pct + "%";
+        if (bumpProgress) triggerHudBump(progressValueEl);
+
+        const bestVal = localStorage.getItem(bestStorageKey(currentDiff.key));
+        bestTimeValueEl.textContent = bestVal ? (Number(bestVal).toFixed(1) + "s") : "--";
+      }
+
+      function initBoardState(diff) {
+        currentDiff = diff || currentDiff;
+        rows = currentDiff.rows;
+        cols = currentDiff.cols;
+        totalMines = currentDiff.mines;
+        cellSize = currentDiff.cellSize;
+
+        canvas.width = cols * cellSize;
+        canvas.height = rows * cellSize;
+
+        minesGrid = [];
+        numbersGrid = [];
+        revealedGrid = [];
+        flaggedGrid = [];
+        revealAnimTime = [];
+        cellBounce = [];
+
+        for (let r = 0; r < rows; r++) {
+          minesGrid.push(new Array(cols).fill(false));
+          numbersGrid.push(new Array(cols).fill(0));
+          revealedGrid.push(new Array(cols).fill(false));
+          flaggedGrid.push(new Array(cols).fill(false));
+          revealAnimTime.push(new Array(cols).fill(0));
+          cellBounce.push(new Array(cols).fill(0));
+        }
+
+        isFirstClick = true;
+        isGameOver = false;
+        isWin = false;
+        revealedSafeCount = 0;
+        flagsCount = 0;
+        sweepCombo = 0;
+        lastActionTime = 0;
+        screenShake = 0;
+        activeHint = null;
+        explodedCell = null;
+        timerRunning = false;
+        elapsedSec = 0;
+
+        ejectedCaps = [];
+        particles = [];
+        shockwaves = [];
+        laserCrosshairs = [];
+        floatingLabels = [];
+        gameOverOverlay.classList.remove("is-visible");
+        updateHud(false);
+      }
+
+      function revealCell(r, c, fromChord) {
+        if (isGameOver || flaggedGrid[r][c] || revealedGrid[r][c]) return 0;
+
+        if (isFirstClick) {
+          isFirstClick = false;
+          const generated = generateNoGuessBoard(rows, cols, totalMines, r, c);
+          minesGrid = generated.minesGrid;
+          numbersGrid = generated.numbersGrid;
+          startTimeMs = performance.now();
+          timerRunning = true;
+        }
+
+        activeHint = null;
+        const now = performance.now();
+        if (now - lastActionTime < 2200) {
+          sweepCombo += 1;
+        } else {
+          sweepCombo = 1;
+        }
+        lastActionTime = now;
+
+        if (minesGrid[r][c]) {
+          revealedGrid[r][c] = true;
+          explodedCell = { r: r, c: c };
+          isGameOver = true;
+          isWin = false;
+          timerRunning = false;
+          screenShake = 14;
+          sfxBoom();
+          spawnShockwave(r, c, "#ef4444", cellSize * 4.2, 5);
+          spawnShockwave(r, c, "#f97316", cellSize * 2.8, 3.5);
+          spawnCellParticles(r, c, "#ef4444", 36, 1.5);
+          spawnCellParticles(r, c, "#facc15", 20, 1.2);
+          triggerRadialCellBounce(r, c, 5, 1.0);
+
+          for (let rr = 0; rr < rows; rr++) {
+            for (let cc = 0; cc < cols; cc++) {
+              if (minesGrid[rr][cc]) revealedGrid[rr][cc] = true;
+            }
+          }
+          gameOverTitle.textContent = "触雷失败";
+          gameOverSummary.textContent = "在 (" + (r + 1) + ", " + (c + 1) + ") 触雷 · 已排雷进度 " + progressValueEl.textContent;
+          gameOverOverlay.classList.add("is-visible");
+          return 0;
+        }
+
+        // BFS 展开连通空白区，并弹出 3D 崩飞砖块与星芒粒子
+        const queue = [[r, c, 0]];
+        let newlyRevealed = 0;
+
+        while (queue.length > 0) {
+          const item = queue.shift();
+          const cr = item[0];
+          const cc = item[1];
+          const dist = item[2];
+
+          if (revealedGrid[cr][cc] || flaggedGrid[cr][cc] || minesGrid[cr][cc]) continue;
+          revealedGrid[cr][cc] = true;
+          revealAnimTime[cr][cc] = now + dist * 15;
+          revealedSafeCount++;
+          newlyRevealed++;
+
+          // 弹出 3D 崩飞盖板
+          if (newlyRevealed <= 24) {
+            spawnEjectedCap(cr, cc, dist * 14, fromChord);
+          }
+          if (newlyRevealed <= 18) {
+            spawnCellParticles(cr, cc, fromChord ? "#2563eb" : "#38bdf8", newlyRevealed === 1 ? 10 : 4, 1.0);
+          }
+
+          if (numbersGrid[cr][cc] === 0) {
+            const nbs = getNeighbors(cr, cc, rows, cols);
+            for (let i = 0; i < nbs.length; i++) {
+              const nr = nbs[i][0];
+              const nc = nbs[i][1];
+              if (!revealedGrid[nr][nc] && !flaggedGrid[nr][nc]) {
+                queue.push([nr, nc, dist + 1]);
+              }
+            }
+          }
+        }
+
+        if (newlyRevealed > 0) {
+          if (!fromChord) {
+            sfxReveal(newlyRevealed, sweepCombo);
+          }
+          spawnShockwave(r, c, newlyRevealed >= 6 ? "#0ea5e9" : "#38bdf8", cellSize * (newlyRevealed >= 6 ? 3.2 : 1.5), newlyRevealed >= 6 ? 4 : 2.5);
+          triggerRadialCellBounce(r, c, newlyRevealed >= 6 ? 4 : 2.2, newlyRevealed >= 6 ? 0.85 : 0.45);
+
+          if (newlyRevealed >= 6) {
+            screenShake = Math.min(9, 3 + newlyRevealed * 0.25);
+            spawnFloatingLabel(r, c, "⚡ 连锁排空 +" + newlyRevealed + "!", "#0284c7", 17);
+          } else if (sweepCombo >= 3 && !fromChord) {
+            spawnFloatingLabel(r, c, "COMBO ×" + sweepCombo + " 🔥", "#2563eb", 15);
+          }
+        }
+
+        checkVictory();
+        updateHud(newlyRevealed > 0);
+        return newlyRevealed;
+      }
+
+      // 点击已满足旗数的数字格快速冲开周围 (Chord Reveal 强力冲击波)
+      function chordReveal(r, c) {
+        if (isGameOver || !revealedGrid[r][c] || numbersGrid[r][c] <= 0) return;
+        const nbs = getNeighbors(r, c, rows, cols);
+        let flagCnt = 0;
+        const toOpen = [];
+        for (let i = 0; i < nbs.length; i++) {
+          const nr = nbs[i][0];
+          const nc = nbs[i][1];
+          if (flaggedGrid[nr][nc]) flagCnt++;
+          else if (!revealedGrid[nr][nc]) toOpen.push([nr, nc]);
+        }
+
+        if (flagCnt !== numbersGrid[r][c] || toOpen.length === 0) {
+          // 旗数不足时给予轻微回弹反馈提示
+          triggerRadialCellBounce(r, c, 1.5, 0.35);
+          return;
+        }
+
+        screenShake = 6.5;
+        sfxChord(toOpen.length);
+        spawnShockwave(r, c, "#2563eb", cellSize * 2.6, 4);
+        spawnShockwave(r, c, "#10b981", cellSize * 1.8, 2.5);
+        triggerRadialCellBounce(r, c, 3.2, 0.8);
+
+        let totalOpened = 0;
+        for (let i = 0; i < toOpen.length; i++) {
+          totalOpened += revealCell(toOpen[i][0], toOpen[i][1], true);
+          if (isGameOver) break;
+        }
+
+        if (totalOpened > 0 && !isGameOver) {
+          spawnFloatingLabel(r, c, "💥 破阵 +" + totalOpened + "!", "#059669", 17);
+        }
+      }
+
+      function toggleFlag(r, c) {
+        if (isGameOver || revealedGrid[r][c]) return;
+        activeHint = null;
+        flaggedGrid[r][c] = !flaggedGrid[r][c];
+        flagsCount += flaggedGrid[r][c] ? 1 : -1;
+        sfxFlag(flaggedGrid[r][c]);
+        triggerHudBump(minesLeftValueEl);
+
+        if (flaggedGrid[r][c]) {
+          screenShake = 2.8;
+          spawnLaserCrosshair(r, c, "#ef4444");
+          spawnCellParticles(r, c, "#f59e0b", 14, 1.15);
+          spawnShockwave(r, c, "#ef4444", cellSize * 1.6, 3);
+          triggerRadialCellBounce(r, c, 1.8, 0.55);
+          spawnFloatingLabel(r, c, "🚩 LOCK", "#dc2626", 13);
+        } else {
+          spawnCellParticles(r, c, "#94a3b8", 8, 0.8);
+          spawnShockwave(r, c, "#94a3b8", cellSize * 1.1, 2);
+        }
+        updateHud(false);
+      }
+
+      function checkVictory() {
+        const totalSafe = rows * cols - totalMines;
+        if (revealedSafeCount >= totalSafe && !isGameOver) {
+          isGameOver = true;
+          isWin = true;
+          timerRunning = false;
+          elapsedSec = (performance.now() - startTimeMs) / 1000;
+          screenShake = 10;
+
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              if (minesGrid[r][c] && !flaggedGrid[r][c]) {
+                flaggedGrid[r][c] = true;
+              }
+            }
+          }
+          flagsCount = totalMines;
+
+          const key = bestStorageKey(currentDiff.key);
+          const prevBest = localStorage.getItem(key);
+          let isNewRecord = false;
+          if (!prevBest || elapsedSec < Number(prevBest)) {
+            localStorage.setItem(key, String(elapsedSec));
+            isNewRecord = true;
+          }
+
+          sfxWin();
+          for (let i = 0; i < 10; i++) {
+            const rr = Math.floor(Math.random() * rows);
+            const cc = Math.floor(Math.random() * cols);
+            const col = ["#38bdf8", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"][i % 5];
+            spawnCellParticles(rr, cc, col, 18, 1.5);
+            spawnShockwave(rr, cc, col, cellSize * 2.5, 3);
+          }
+
+          updateHud(true);
+          gameOverTitle.textContent = isNewRecord ? "🏆 刷新最快纪录！" : "🎉 无猜扫雷通关！";
+          gameOverSummary.textContent = currentDiff.name + "难度 · 耗时 " + elapsedSec.toFixed(1) + " 秒";
+          gameOverOverlay.classList.add("is-visible");
+        }
+      }
+
+      function requestLogicalHint() {
+        if (isGameOver) return;
+        if (isFirstClick) {
+          const cr = Math.floor(rows / 2);
+          const cc = Math.floor(cols / 2);
+          activeHint = { r: cr, c: cc, type: "safe", time: performance.now() };
+          spawnShockwave(cr, cc, "#10b981", cellSize * 2, 3);
+          showToast("💡 提示：任意点击第一格必为 3×3 空白安全开局");
+          return;
+        }
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (flaggedGrid[r][c] && !minesGrid[r][c]) {
+              activeHint = { r: r, c: c, type: "safe", time: performance.now() };
+              spawnShockwave(r, c, "#ef4444", cellSize * 2, 3);
+              showToast("⚠️ 提示：第 " + (r + 1) + " 行第 " + (c + 1) + " 列的旗子标错了（实际安全）");
+              return;
+            }
+          }
+        }
+
+        const deductions = findNextLogicalDeductions(rows, cols, totalMines, numbersGrid, revealedGrid, flaggedGrid);
+        if (deductions.safeList.length > 0) {
+          const pick = deductions.safeList[0];
+          activeHint = { r: pick.r, c: pick.c, type: "safe", time: performance.now() };
+          spawnShockwave(pick.r, pick.c, "#10b981", cellSize * 2.2, 3.5);
+          showToast("💡 绿色高亮格：(" + (pick.r + 1) + "," + (pick.c + 1) + ") " + pick.reason);
+        } else if (deductions.mineList.length > 0) {
+          const pick = deductions.mineList[0];
+          activeHint = { r: pick.r, c: pick.c, type: "mine", time: performance.now() };
+          spawnShockwave(pick.r, pick.c, "#f59e0b", cellSize * 2.2, 3.5);
+          showToast("🚩 橙色高亮格：(" + (pick.r + 1) + "," + (pick.c + 1) + ") " + pick.reason);
+        } else {
+          showToast("💡 请先将已知必雷格标上旗子后再推理下一步");
+        }
+      }
+
+      function drawRoundedRect(ctx, x, y, w, h, rad) {
+        ctx.beginPath();
+        ctx.moveTo(x + rad, y);
+        ctx.lineTo(x + w - rad, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + rad);
+        ctx.lineTo(x + w, y + h - rad);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - rad, y + h);
+        ctx.lineTo(x + rad, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - rad);
+        ctx.lineTo(x, y + rad);
+        ctx.quadraticCurveTo(x, y, x + rad, y);
+        ctx.closePath();
+      }
+
+      function drawStarShape(ctx, x, y, r, rot) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const rad = i % 2 === 0 ? r : r * 0.4;
+          const a = (i * Math.PI) / 4;
+          if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+          else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function renderLoop(now) {
+        if (timerRunning && !isGameOver) {
+          elapsedSec = (now - startTimeMs) / 1000;
+          timerValueEl.textContent = elapsedSec.toFixed(1) + "s";
+        }
+
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (screenShake > 0.3) {
+          const sx = (Math.random() - 0.5) * screenShake;
+          const sy = (Math.random() - 0.5) * screenShake;
+          ctx.translate(sx, sy);
+          screenShake *= 0.82;
+        } else {
+          screenShake = 0;
+        }
+
+        const pad = 2.2;
+        const rad = Math.max(5, cellSize * 0.22);
+
+        // 检查当前悬停数字格是否可一键和弦破阵
+        let chordPreviewSet = null;
+        let chordReady = false;
+        if (hoverCell && !isGameOver && revealedGrid[hoverCell.r][hoverCell.c] && numbersGrid[hoverCell.r][hoverCell.c] > 0) {
+          const nbs = getNeighbors(hoverCell.r, hoverCell.c, rows, cols);
+          let fCnt = 0;
+          let uCnt = 0;
+          chordPreviewSet = new Set();
+          nbs.forEach(function (nb) {
+            if (flaggedGrid[nb[0]][nb[1]]) fCnt++;
+            else if (!revealedGrid[nb[0]][nb[1]]) {
+              uCnt++;
+              chordPreviewSet.add(nb[0] + "," + nb[1]);
+            }
+          });
+          chordReady = (fCnt === numbersGrid[hoverCell.r][hoverCell.c] && uCnt > 0);
+        }
+
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const x = c * cellSize + pad;
+            const y = r * cellSize + pad;
+            const w = cellSize - pad * 2;
+            const h = cellSize - pad * 2;
+            const cx = c * cellSize + cellSize / 2;
+            const cy = r * cellSize + cellSize / 2;
+
+            const isRev = revealedGrid[r][c];
+            const isFlg = flaggedGrid[r][c];
+            const isHover = hoverCell && hoverCell.r === r && hoverCell.c === c;
+            const inChordPreview = chordPreviewSet && chordPreviewSet.has(r + "," + c);
+
+            ctx.save();
+
+            // 邻格冲击回弹缩放
+            if (cellBounce[r][c] > 0.01) {
+              const bScale = 1 - Math.sin(cellBounce[r][c] * Math.PI) * 0.14;
+              ctx.translate(cx, cy);
+              ctx.scale(bScale, bScale);
+              ctx.translate(-cx, -cy);
+              cellBounce[r][c] *= 0.82;
+            }
+
+            if (isRev && revealAnimTime[r][c] > 0) {
+              const dt = now - revealAnimTime[r][c];
+              if (dt < 0) {
+                drawRoundedRect(ctx, x, y, w, h, rad);
+                ctx.fillStyle = "rgba(255, 255, 255, 0.84)";
+                ctx.fill();
+                ctx.restore();
+                continue;
+              } else if (dt < 170) {
+                const s = 0.65 + 0.35 * (dt / 170);
+                ctx.translate(cx, cy);
+                ctx.scale(s, s);
+                ctx.translate(-cx, -cy);
+              }
+            }
+
+            drawRoundedRect(ctx, x, y, w, h, rad);
+
+            if (isRev) {
+              if (minesGrid[r][c]) {
+                const isExploded = explodedCell && explodedCell.r === r && explodedCell.c === c;
+                ctx.fillStyle = isExploded ? "rgba(239, 68, 68, 0.92)" : "rgba(254, 226, 226, 0.88)";
+                ctx.fill();
+                ctx.strokeStyle = "rgba(239, 68, 68, 0.72)";
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.fillStyle = isExploded ? "#ffffff" : "#dc2626";
+                ctx.beginPath();
+                ctx.arc(cx, cy, cellSize * 0.22, 0, Math.PI * 2);
+                ctx.fill();
+              } else {
+                ctx.fillStyle = (isHover && chordReady) ? "rgba(209, 250, 229, 0.78)" : "rgba(241, 245, 249, 0.56)";
+                ctx.fill();
+                ctx.strokeStyle = (isHover && chordReady) ? "#10b981" : "rgba(148, 163, 184, 0.28)";
+                ctx.lineWidth = (isHover && chordReady) ? 2 : 1;
+                ctx.stroke();
+
+                const num = numbersGrid[r][c];
+                if (num > 0) {
+                  ctx.fillStyle = NUM_COLORS[num] || "#0f172a";
+                  ctx.font = "800 " + Math.round(cellSize * 0.48) + "px " + getComputedStyle(document.body).fontFamily;
+                  ctx.textAlign = "center";
+                  ctx.textBaseline = "middle";
+                  ctx.fillText(String(num), cx, cy + 1);
+                }
+              }
+            } else {
+              // 未翻开毛玻璃凸起格
+              const grad = ctx.createLinearGradient(x, y, x, y + h);
+              if (inChordPreview && chordReady) {
+                grad.addColorStop(0, "rgba(209, 250, 229, 0.96)");
+                grad.addColorStop(1, "rgba(167, 243, 208, 0.88)");
+              } else if (isHover || inChordPreview) {
+                grad.addColorStop(0, "rgba(239, 246, 255, 0.96)");
+                grad.addColorStop(1, "rgba(219, 234, 254, 0.88)");
+              } else {
+                grad.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+                grad.addColorStop(1, "rgba(241, 245, 249, 0.74)");
+              }
+              ctx.fillStyle = grad;
+              ctx.fill();
+              ctx.strokeStyle = (inChordPreview && chordReady)
+                ? "#10b981"
+                : (isHover ? "rgba(37, 99, 235, 0.65)" : "rgba(255, 255, 255, 0.96)");
+              ctx.lineWidth = (inChordPreview && chordReady) ? 2 : 1.4;
+              ctx.stroke();
+
+              if (isFlg) {
+                ctx.strokeStyle = "#334155";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx - cellSize * 0.12, cy + cellSize * 0.22);
+                ctx.lineTo(cx - cellSize * 0.12, cy - cellSize * 0.22);
+                ctx.stroke();
+
+                ctx.fillStyle = "#ef4444";
+                ctx.beginPath();
+                ctx.moveTo(cx - cellSize * 0.12, cy - cellSize * 0.22);
+                ctx.lineTo(cx + cellSize * 0.24, cy - cellSize * 0.1);
+                ctx.lineTo(cx - cellSize * 0.12, cy + cellSize * 0.04);
+                ctx.closePath();
+                ctx.fill();
+              }
+            }
+
+            if (activeHint && activeHint.r === r && activeHint.c === c) {
+              const pulse = 0.5 + 0.5 * Math.sin(now * 0.012);
+              drawRoundedRect(ctx, x + 1, y + 1, w - 2, h - 2, rad);
+              ctx.strokeStyle = activeHint.type === "safe" ? "#10b981" : "#f59e0b";
+              ctx.lineWidth = 2.6 + pulse * 1.6;
+              ctx.stroke();
+            }
+
+            ctx.restore();
+          }
+        }
+
+        // 1. 绘制插旗战术激光十字锁定线
+        if (laserCrosshairs.length > 0) {
+          const remainL = [];
+          for (let i = 0; i < laserCrosshairs.length; i++) {
+            const lc = laserCrosshairs[i];
+            lc.alpha -= 0.055;
+            lc.radius *= 0.92;
+            if (lc.alpha > 0.02) {
+              ctx.save();
+              ctx.globalAlpha = lc.alpha;
+              ctx.strokeStyle = lc.color;
+              ctx.lineWidth = 1.8;
+              ctx.beginPath();
+              ctx.moveTo(0, lc.y);
+              ctx.lineTo(canvas.width, lc.y);
+              ctx.moveTo(lc.x, 0);
+              ctx.lineTo(lc.x, canvas.height);
+              ctx.stroke();
+
+              ctx.lineWidth = 2.4;
+              ctx.beginPath();
+              ctx.arc(lc.x, lc.y, lc.radius, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+              remainL.push(lc);
+            }
+          }
+          laserCrosshairs = remainL;
+        }
+
+        // 2. 绘制 3D 崩飞砖块盖板
+        if (ejectedCaps.length > 0) {
+          const remainC = [];
+          for (let i = 0; i < ejectedCaps.length; i++) {
+            const cap = ejectedCaps[i];
+            if (now - cap.born < cap.delay) {
+              remainC.push(cap);
+              continue;
+            }
+            cap.x += cap.vx;
+            cap.y += cap.vy;
+            cap.vy += cap.gravity;
+            cap.rot += cap.vRot;
+            cap.size *= 0.97;
+            cap.alpha -= 0.032;
+
+            if (cap.alpha > 0.02 && cap.size > 3) {
+              ctx.save();
+              ctx.globalAlpha = cap.alpha;
+              ctx.translate(cap.x, cap.y);
+              ctx.rotate(cap.rot);
+              drawRoundedRect(ctx, -cap.size / 2, -cap.size / 2, cap.size, cap.size, 5);
+              ctx.fillStyle = cap.color;
+              ctx.fill();
+              ctx.strokeStyle = "rgba(37, 99, 235, 0.45)";
+              ctx.lineWidth = 1.3;
+              ctx.stroke();
+              ctx.restore();
+              remainC.push(cap);
+            }
+          }
+          ejectedCaps = remainC;
+        }
+
+        // 3. 扩散光环特效
+        if (shockwaves.length > 0) {
+          const remainW = [];
+          for (let i = 0; i < shockwaves.length; i++) {
+            const sw = shockwaves[i];
+            sw.radius += (sw.maxRadius - sw.radius) * 0.22;
+            sw.alpha -= 0.04;
+            if (sw.alpha > 0.02) {
+              ctx.save();
+              ctx.globalAlpha = sw.alpha;
+              ctx.strokeStyle = sw.color;
+              ctx.lineWidth = sw.lineWidth || 2.6;
+              ctx.beginPath();
+              ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.restore();
+              remainW.push(sw);
+            }
+          }
+          shockwaves = remainW;
+        }
+
+        // 4. 星芒与几何爆炸粒子
+        if (particles.length > 0) {
+          const remainP = [];
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.rot += p.vRot || 0;
+            p.alpha -= p.decay;
+            if (p.alpha > 0.02) {
+              ctx.save();
+              ctx.globalAlpha = p.alpha;
+              ctx.fillStyle = p.color;
+              if (p.shape === "star") {
+                drawStarShape(ctx, p.x, p.y, p.size * 1.3, p.rot);
+              } else if (p.shape === "diamond") {
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot);
+                ctx.fillRect(-p.size * 0.7, -p.size * 0.7, p.size * 1.4, p.size * 1.4);
+              } else {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2);
+                ctx.fill();
+              }
+              ctx.restore();
+              remainP.push(p);
+            }
+          }
+          particles = remainP;
+        }
+
+        // 5. 浮动连击与破阵飘字
+        if (floatingLabels.length > 0) {
+          const remainF = [];
+          for (let i = 0; i < floatingLabels.length; i++) {
+            const fl = floatingLabels[i];
+            fl.y += fl.vy;
+            fl.alpha -= 0.022;
+            if (fl.alpha > 0.02) {
+              ctx.save();
+              ctx.globalAlpha = fl.alpha;
+              ctx.font = "800 " + fl.size + "px " + getComputedStyle(document.body).fontFamily;
+              ctx.textAlign = "center";
+              ctx.strokeStyle = "rgba(255, 255, 255, 0.96)";
+              ctx.lineWidth = 3.6;
+              ctx.fillStyle = fl.color;
+              ctx.strokeText(fl.text, fl.x, fl.y);
+              ctx.fillText(fl.text, fl.x, fl.y);
+              ctx.restore();
+              remainF.push(fl);
+            }
+          }
+          floatingLabels = remainF;
+        }
+
+        ctx.restore();
+        requestAnimationFrame(renderLoop);
+      }
+
+      function getCellFromEvent(e) {
+        const rect = canvas.getBoundingClientRect();
+        const sx = canvas.width / rect.width;
+        const sy = canvas.height / rect.height;
+        const cx = (e.clientX - rect.left) * sx;
+        const cy = (e.clientY - rect.top) * sy;
+        const c = Math.floor(cx / cellSize);
+        const r = Math.floor(cy / cellSize);
+        if (r >= 0 && r < rows && c >= 0 && c < cols) {
+          return { r: r, c: c };
+        }
+        return null;
+      }
+
+      canvas.addEventListener("pointermove", function (e) {
+        hoverCell = getCellFromEvent(e);
+      });
+
+      canvas.addEventListener("pointerleave", function () {
+        hoverCell = null;
+      });
+
+      canvas.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+      });
+
+      canvas.addEventListener("mousedown", function (e) {
+        if (isGameOver) return;
+        const cell = getCellFromEvent(e);
+        if (!cell) return;
+
+        if (e.button === 2) {
+          e.preventDefault();
+          toggleFlag(cell.r, cell.c);
+        } else if (e.button === 0) {
+          if (revealedGrid[cell.r][cell.c]) {
+            chordReveal(cell.r, cell.c);
+          } else if (flagMode) {
+            toggleFlag(cell.r, cell.c);
+          } else {
+            revealCell(cell.r, cell.c, false);
+          }
+        }
+      });
+
+      diffBtns.forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          const key = btn.getAttribute("data-diff");
+          if (!DIFFICULTIES[key]) return;
+          diffBtns.forEach(function (b) { b.classList.remove("is-active-mode"); });
+          btn.classList.add("is-active-mode");
+          initBoardState(DIFFICULTIES[key]);
+        });
+      });
+
+      function toggleFlagMode() {
+        flagMode = !flagMode;
+        flagModeBtn.textContent = flagMode ? "🚩 插旗" : "⛏ 翻开";
+        flagModeBtn.classList.toggle("is-active-mode", flagMode);
+      }
+
+      flagModeBtn.addEventListener("click", toggleFlagMode);
+      logicHintBtn.addEventListener("click", requestLogicalHint);
+      restartGameBtn.addEventListener("click", function () {
+        initBoardState(currentDiff);
+        showToast("已重新开始无猜扫雷");
+      });
+      overlayRestartBtn.addEventListener("click", function () {
+        initBoardState(currentDiff);
+      });
+
+      toggleSoundBtn.addEventListener("click", function () {
+        soundEnabled = !soundEnabled;
+        toggleSoundBtn.textContent = soundEnabled ? "🔊" : "🔇";
+      });
+
+      window.addEventListener("keydown", function (e) {
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        if (e.key === "h" || e.key === "H") {
+          e.preventDefault();
+          requestLogicalHint();
+        } else if (e.key === "f" || e.key === "F") {
+          e.preventDefault();
+          toggleFlagMode();
+        } else if (e.key === "r" || e.key === "R") {
+          e.preventDefault();
+          initBoardState(currentDiff);
+        } else if (e.key === "m" || e.key === "M") {
+          e.preventDefault();
+          soundEnabled = !soundEnabled;
+          toggleSoundBtn.textContent = soundEnabled ? "🔊" : "🔇";
+        }
+      });
+
+      const randomBgBtn = document.getElementById("randomBgBtn");
+      const currentBgLabel = document.getElementById("currentBgLabel");
+
+      function pickWeightedBackground(showMsg) {
+        const pool = (BLOG_CONFIG.backgrounds || []).filter(function (item) {
+          return item && item.url && Number(item.weight) > 0;
+        });
+        if (pool.length === 0) return;
+
+        const totalWeight = pool.reduce(function (sum, item) {
+          return sum + Number(item.weight);
+        }, 0);
+
+        let rand = Math.random() * totalWeight;
+        let chosen = pool[0];
+        for (let i = 0; i < pool.length; i++) {
+          rand -= Number(pool[i].weight);
+          if (rand <= 0) {
+            chosen = pool[i];
+            break;
+          }
+        }
+
+        document.documentElement.style.setProperty("--bg-image", 'url("' + chosen.url + '")');
+        const pct = Math.round((Number(chosen.weight) / totalWeight) * 100);
+        if (currentBgLabel) {
+          currentBgLabel.textContent = chosen.name;
+        }
+        if (showMsg) {
+          showToast("已切换背景：「" + chosen.name + "」(" + pct + "% 权重)");
+        }
+      }
+
+      pickWeightedBackground(false);
+      randomBgBtn.addEventListener("click", function () {
+        pickWeightedBackground(true);
+      });
+
+      function loadExternalScript(src) {
+        return new Promise(function (resolve, reject) {
+          const s = document.createElement("script");
+          s.src = src;
+          s.async = true;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.body.appendChild(s);
+        });
+      }
+
+      function applyLive2DUpperBodyZoom(disp) {
+        const boxW = (disp.width || 280) + "px";
+        const boxH = (disp.boxHeight || 300) + "px";
+        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 2.25;
+        const anchorY = disp.anchorY || "0%";
+        const shiftX = typeof disp.shiftX === "number" ? (disp.shiftX + "px") : (disp.shiftX || "10px");
+        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "20px");
+
+        const rootStyle = document.documentElement.style;
+        rootStyle.setProperty("--live2d-box-width", boxW);
+        rootStyle.setProperty("--live2d-box-height", boxH);
+        rootStyle.setProperty("--live2d-zoom", String(zoom));
+        rootStyle.setProperty("--live2d-anchor-y", anchorY);
+        rootStyle.setProperty("--live2d-shift-x", shiftX);
+        rootStyle.setProperty("--live2d-shift-y", shiftY);
+
+        function syncDomStyles() {
+          const stages = document.querySelectorAll("#oml2d-stage, .oml2d-stage, #live2d-widget, .live2d-widget-container");
+          stages.forEach(function (st) {
+            st.style.setProperty("position", "fixed", "important");
+            st.style.setProperty("right", (typeof disp.hOffset === "number" ? disp.hOffset : 12) + "px", "important");
+            st.style.setProperty("bottom", (typeof disp.vOffset === "number" ? disp.vOffset : 0) + "px", "important");
+            st.style.setProperty("left", "auto", "important");
+            st.style.setProperty("top", "auto", "important");
+            st.style.setProperty("width", boxW, "important");
+            st.style.setProperty("height", boxH, "important");
+            st.style.setProperty("overflow", "visible", "important");
+            st.style.setProperty("clip-path", "inset(-600px -300px 0px -300px)", "important");
+            st.style.setProperty("pointer-events", "none", "important");
+          });
+
+          const canvases = document.querySelectorAll("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
+          canvases.forEach(function (cvs) {
+            cvs.style.setProperty("transform-origin", "50% " + anchorY, "important");
+            cvs.style.setProperty("transform", "translate(" + shiftX + ", " + shiftY + ") scale(" + zoom + ")", "important");
+            cvs.style.setProperty("pointer-events", "none", "important");
+          });
+        }
+
+        syncDomStyles();
+        if (!window.__l2dPassthroughBound) {
+          window.__l2dPassthroughBound = true;
+          function forwardToLive2DCanvas(e, eventType, isPointer) {
+            if (e.__fromL2dPassthrough) return;
+            const cvs = document.querySelector("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
+            if (!cvs) return;
+            const rect = cvs.getBoundingClientRect();
+            const inside = (
+              e.clientX >= rect.left &&
+              e.clientX <= rect.right &&
+              e.clientY >= rect.top &&
+              e.clientY <= rect.bottom
+            );
+            if (!inside && eventType !== "pointermove" && eventType !== "mousemove" && eventType !== "pointerup" && eventType !== "mouseup") {
+              return;
+            }
+            try {
+              const initOpts = {
+                clientX: e.clientX,
+                clientY: e.clientY,
+                screenX: e.screenX,
+                screenY: e.screenY,
+                button: e.button || 0,
+                buttons: e.buttons || (eventType === "pointerdown" || eventType === "mousedown" ? 1 : 0),
+                bubbles: true,
+                cancelable: true,
+                view: window
+              };
+              let evt;
+              if (isPointer && typeof PointerEvent === "function") {
+                initOpts.pointerId = e.pointerId || 1;
+                initOpts.pointerType = e.pointerType || "mouse";
+                initOpts.isPrimary = e.isPrimary !== false;
+                evt = new PointerEvent(eventType, initOpts);
+              } else {
+                evt = new MouseEvent(eventType, initOpts);
+              }
+              evt.__fromL2dPassthrough = true;
+              cvs.dispatchEvent(evt);
+            } catch (err) {}
+          }
+
+          ["pointerdown", "pointermove", "pointerup"].forEach(function (type) {
+            window.addEventListener(type, function (e) {
+              forwardToLive2DCanvas(e, type, true);
+            }, { passive: true, capture: true });
+          });
+
+          ["mousedown", "mousemove", "mouseup", "click"].forEach(function (type) {
+            window.addEventListener(type, function (e) {
+              forwardToLive2DCanvas(e, type, false);
+            }, { passive: true, capture: true });
+          });
+        }
+        let count = 0;
+        const timer = setInterval(function () {
+          syncDomStyles();
+          count++;
+          if (count > 40) clearInterval(timer);
+        }, 180);
+      }
+
+      async function initLive2D() {
+        const cfg = BLOG_CONFIG.live2d;
+        if (!cfg || !cfg.enabled || !cfg.modelJsonUrl) return;
+        const disp = cfg.display || {};
+        const mob = cfg.mobile || {};
+        const react = cfg.react || {};
+
+        applyLive2DUpperBodyZoom(disp);
+
+        try {
+          if (cfg.engine === "oml2d") {
+            await loadExternalScript(cfg.oml2dScriptUrl || "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js");
+            if (window.OML2D && typeof window.OML2D.loadOml2d === "function") {
+              const omlInstance = window.OML2D.loadOml2d({
+                dockedPosition: "right",
+                menus: { disable: true },
+                tips: { disable: true },
+                statusBar: { disable: true },
+                models: [
+                  {
+                    path: cfg.modelJsonUrl,
+                    stageStyle: {
+                      width: disp.width || 280,
+                      height: disp.boxHeight || 300
+                    }
+                  }
+                ]
+              });
+              if (omlInstance && typeof omlInstance.onLoad === "function") {
+                omlInstance.onLoad(function () {
+                  applyLive2DUpperBodyZoom(disp);
+                });
+              }
+            }
+          } else {
+            await loadExternalScript(cfg.scriptUrl || "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js");
+            if (window.L2Dwidget && typeof window.L2Dwidget.init === "function") {
+              window.L2Dwidget.init({
+                model: { jsonPath: cfg.modelJsonUrl, scale: disp.scale || 1 },
+                display: {
+                  position: disp.position || "right",
+                  width: disp.width || 280,
+                  height: disp.boxHeight || 300,
+                  hOffset: typeof disp.hOffset === "number" ? disp.hOffset : 12,
+                  vOffset: typeof disp.vOffset === "number" ? disp.vOffset : 0
+                },
+                mobile: { show: mob.show !== false, scale: mob.scale || 0.6 },
+                react: { opacityDefault: react.opacityDefault || 0.95, opacityOnHover: react.opacityOnHover || 1 }
+              });
+            }
+          }
+          applyLive2DUpperBodyZoom(disp);
+        } catch (e) {}
+      }
+
+      initLive2D();
+      initBoardState(DIFFICULTIES.easy);
+      requestAnimationFrame(renderLoop);
+    })();
+  </script>
+</body>
+</html>
