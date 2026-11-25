@@ -8,8 +8,8 @@
   <meta name="description" content="5格正六边形棋盘消行拼图游戏" />
   <meta name="post-date" content="2026-11-23" />
   <meta name="post-tags" content="美国方块,六边形消行" />
-  <link rel="stylesheet" href="../../style.css?v=20261125" />
-  <link rel="stylesheet" href="./style.css?v=20261125" />
+  <link rel="stylesheet" href="../../style.css?v=20261125b" />
+  <link rel="stylesheet" href="./style.css?v=20261125b" />
   <style>
     /* 紧凑一屏双栏布局兜底（防止旧版缓存 style.css 导致计分栏或右侧拼图栏掉到下方） */
     .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
@@ -160,10 +160,10 @@
           width: 280,
           height: 300,
           boxHeight: 300,
-          upperZoom: 2.6,
+          upperZoom: 2.25,
           anchorY: "0%",
-          shiftX: "12px",
-          shiftY: "32px",
+          shiftX: "10px",
+          shiftY: "20px",
           hOffset: 12,
           vOffset: 0,
           scale: 1
@@ -1120,10 +1120,10 @@
       function applyLive2DUpperBodyZoom(disp) {
         const boxW = (disp.width || 280) + "px";
         const boxH = (disp.boxHeight || 300) + "px";
-        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 2.6;
+        const zoom = Number(disp.upperZoom) > 0 ? Number(disp.upperZoom) : 2.25;
         const anchorY = disp.anchorY || "0%";
-        const shiftX = typeof disp.shiftX === "number" ? (disp.shiftX + "px") : (disp.shiftX || "12px");
-        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "32px");
+        const shiftX = typeof disp.shiftX === "number" ? (disp.shiftX + "px") : (disp.shiftX || "10px");
+        const shiftY = typeof disp.shiftY === "number" ? (disp.shiftY + "px") : (disp.shiftY || "20px");
 
         const rootStyle = document.documentElement.style;
         rootStyle.setProperty("--live2d-box-width", boxW);
