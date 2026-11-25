@@ -8,10 +8,10 @@
   <meta name="description" content="4×4毛玻璃数字滑块合成游戏" />
   <meta name="post-date" content="2026-11-24" />
   <meta name="post-tags" content="2048,数字合成" />
-  <link rel="stylesheet" href="../../style.css?v=20261125b" />
-  <link rel="stylesheet" href="./style.css?v=20261125b" />
+  <link rel="stylesheet" href="../../style.css?v=20261125c" />
+  <link rel="stylesheet" href="./style.css?v=20261125c" />
   <style>
-    /* 紧凑一屏布局兜底（防止旧版缓存 style.css 导致计分栏或棋盘错位，电脑端一屏免滚动） */
+    /* 紧凑一屏布局与特效兜底（防止旧版缓存 style.css 导致错位，电脑端一屏免滚动） */
     .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
     .glass-main-frame.game-2048-frame { max-width: 600px; padding: 16px 22px; }
     .game-top-bar { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.72); }
@@ -23,29 +23,44 @@
     .hud-stat-label { font-size: 0.72rem; font-weight: 700; color: #475569; }
     .hud-stat-value { font-family: var(--font-mono, monospace); font-size: 1.24rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-top: 2px; }
     .hud-stat-value.accent { color: #2563eb; }
-    .board-2048-card { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); }
+    .hud-stat-value.is-bumping { animation: hudScoreBump 0.26s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes hudScoreBump { 0% { transform: scale(1); } 40% { transform: scale(1.24); color: #2563eb; } 100% { transform: scale(1); } }
+    .board-2048-card { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; padding: 12px; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); overflow: hidden; }
     .grid-2048-wrap { position: relative; width: 368px; height: 368px; max-width: 100%; aspect-ratio: 1 / 1; padding: 10px; border-radius: 18px; background: rgba(255,255,255,0.48); border: 1px solid rgba(255,255,255,0.88); touch-action: none; cursor: grab; user-select: none; }
+    .grid-2048-wrap.bump-left { animation: boardBumpLeft 0.16s ease-out; }
+    .grid-2048-wrap.bump-right { animation: boardBumpRight 0.16s ease-out; }
+    .grid-2048-wrap.bump-up { animation: boardBumpUp 0.16s ease-out; }
+    .grid-2048-wrap.bump-down { animation: boardBumpDown 0.16s ease-out; }
+    .grid-2048-wrap.shake-heavy { animation: boardShakeHeavy 0.28s ease-out; }
+    @keyframes boardBumpLeft { 0%, 100% { transform: translateX(0); } 40% { transform: translateX(-5px); } }
+    @keyframes boardBumpRight { 0%, 100% { transform: translateX(0); } 40% { transform: translateX(5px); } }
+    @keyframes boardBumpUp { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+    @keyframes boardBumpDown { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(5px); } }
+    @keyframes boardShakeHeavy { 0%, 100% { transform: translate(0,0) rotate(0deg); } 20% { transform: translate(-5px,3px) rotate(-0.8deg); } 40% { transform: translate(5px,-3px) rotate(0.8deg); } 60% { transform: translate(-3px,-2px) rotate(-0.4deg); } 80% { transform: translate(3px,2px) rotate(0.4deg); } }
     .grid-2048-bg { width: 100%; height: 100%; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(4, 1fr); gap: 10px; }
     .grid-2048-cell { border-radius: 12px; background: rgba(255,255,255,0.56); border: 1px solid rgba(148,163,184,0.32); }
     .tile-2048-layer { position: absolute; inset: 10px; pointer-events: none; }
-    .tile-2048 { position: absolute; width: calc((100% - 30px) / 4); height: calc((100% - 30px) / 4); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono, monospace); font-weight: 800; font-size: 1.65rem; box-shadow: 0 6px 16px -4px rgba(15,23,42,0.16); border: 1px solid rgba(255,255,255,0.82); transition: transform 0.13s cubic-bezier(0.22, 1, 0.36, 1); }
-    .tile-2048-inner { width: 100%; height: 100%; border-radius: inherit; display: flex; align-items: center; justify-content: center; }
-    .tile-2048.is-new .tile-2048-inner { animation: tileSpawnPop 0.18s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    .tile-2048.is-merged .tile-2048-inner { animation: tileMergePulse 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-    @keyframes tileSpawnPop { 0% { transform: scale(0.3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-    @keyframes tileMergePulse { 0% { transform: scale(1); } 45% { transform: scale(1.18); } 100% { transform: scale(1); } }
+    .fx-2048-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 30; }
+    .tile-2048 { position: absolute; width: calc((100% - 30px) / 4); height: calc((100% - 30px) / 4); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono, monospace); font-weight: 800; font-size: 1.65rem; box-shadow: 0 6px 16px -4px rgba(15,23,42,0.16); border: 1px solid rgba(255,255,255,0.82); will-change: transform; }
+    .tile-2048-inner { position: relative; overflow: hidden; width: 100%; height: 100%; border-radius: inherit; display: flex; align-items: center; justify-content: center; }
+    .tile-2048.is-high-tier .tile-2048-inner::after { content: ""; position: absolute; top: -50%; left: -120%; width: 65%; height: 200%; background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.38) 50%, rgba(255,255,255,0) 100%); transform: rotate(25deg); animation: tileHoloSweep 2.6s infinite ease-in-out; pointer-events: none; }
+    @keyframes tileHoloSweep { 0% { left: -120%; } 45%, 100% { left: 160%; } }
+    .tile-2048.is-new .tile-2048-inner { animation: tileSpawnPop 0.2s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    .tile-2048.is-merged .tile-2048-inner { animation: tileMergePulse 0.24s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+    @keyframes tileSpawnPop { 0% { transform: scale(0.25); opacity: 0; } 70% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+    @keyframes tileMergePulse { 0% { transform: scale(0.85); } 45% { transform: scale(1.24); } 100% { transform: scale(1); } }
     .tile-2048[data-val="2"] { background: rgba(255,255,255,0.86); color: #1e293b; }
     .tile-2048[data-val="4"] { background: rgba(224,242,254,0.9); color: #0369a1; }
     .tile-2048[data-val="8"] { background: linear-gradient(135deg,#38bdf8,#0ea5e9); color: #fff; }
     .tile-2048[data-val="16"] { background: linear-gradient(135deg,#3b82f6,#2563eb); color: #fff; }
     .tile-2048[data-val="32"] { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; }
     .tile-2048[data-val="64"] { background: linear-gradient(135deg,#8b5cf6,#6d28d9); color: #fff; }
-    .tile-2048[data-val="128"] { background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-size: 1.42rem; }
-    .tile-2048[data-val="256"] { background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; font-size: 1.42rem; }
-    .tile-2048[data-val="512"] { background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff; font-size: 1.42rem; }
-    .tile-2048[data-val="1024"] { background: linear-gradient(135deg,#f97316,#ea580c); color: #fff; font-size: 1.22rem; }
-    .tile-2048[data-val="2048"] { background: linear-gradient(135deg,#ec4899,#db2777); color: #fff; font-size: 1.22rem; }
-    .tile-2048.is-super { background: linear-gradient(135deg,#0f172a,#1e293b); color: #38bdf8; font-size: 1.15rem; }
+    .tile-2048[data-val="128"] { background: linear-gradient(135deg,#10b981,#059669); color: #fff; font-size: 1.42rem; box-shadow: 0 6px 18px rgba(16,185,129,0.32); }
+    .tile-2048[data-val="256"] { background: linear-gradient(135deg,#14b8a6,#0d9488); color: #fff; font-size: 1.42rem; box-shadow: 0 6px 20px rgba(20,184,166,0.36); }
+    .tile-2048[data-val="512"] { background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff; font-size: 1.42rem; box-shadow: 0 6px 22px rgba(245,158,11,0.4); }
+    .tile-2048[data-val="1024"] { background: linear-gradient(135deg,#f97316,#ea580c); color: #fff; font-size: 1.22rem; box-shadow: 0 6px 24px rgba(249,115,22,0.45); }
+    .tile-2048[data-val="2048"] { background: linear-gradient(135deg,#ec4899,#db2777); color: #fff; font-size: 1.22rem; box-shadow: 0 0 26px rgba(236,72,153,0.55); }
+    .tile-2048.is-super { background: linear-gradient(135deg,#0f172a,#1e293b); color: #38bdf8; font-size: 1.15rem; box-shadow: 0 0 26px rgba(56,189,248,0.5); }
     .gameover-overlay { position: absolute; inset: 12px; border-radius: 18px; background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.28s ease; z-index: 40; }
     .gameover-overlay.is-visible { opacity: 1; visibility: visible; }
     @media (min-width: 641px) and (min-height: 580px) { html, body { height: 100vh; overflow: hidden; } .main-stage.game-page-stage { height: 100vh; } }
@@ -104,7 +119,7 @@
         </div>
       </section>
 
-      <!-- 3. 4×4 毛玻璃主棋盘 -->
+      <!-- 3. 4×4 毛玻璃主棋盘 + 粒子与光环特效画布 -->
       <section class="board-2048-card" aria-label="2048 四乘四主棋盘">
         <div id="boardWrap" class="grid-2048-wrap">
           <div class="grid-2048-bg">
@@ -127,6 +142,7 @@
           </div>
 
           <div id="tileLayer" class="tile-2048-layer"></div>
+          <canvas id="fxCanvas2048" class="fx-2048-canvas" width="368" height="368"></canvas>
         </div>
 
         <!-- 胜利 / 游戏结束毛玻璃遮罩 -->
@@ -193,8 +209,24 @@
       const SIZE = 4;
       const STORAGE_KEY_BEST = "tm_sharweek_2048_best_v1";
 
+      const TILE_FX_COLORS = {
+        2: "#64748b",
+        4: "#0284c7",
+        8: "#0ea5e9",
+        16: "#2563eb",
+        32: "#4f46e5",
+        64: "#7c3aed",
+        128: "#10b981",
+        256: "#0d9488",
+        512: "#f59e0b",
+        1024: "#f97316",
+        2048: "#ec4899"
+      };
+
       const boardWrap = document.getElementById("boardWrap");
       const tileLayer = document.getElementById("tileLayer");
+      const fxCanvas = document.getElementById("fxCanvas2048");
+      const fxCtx = fxCanvas.getContext("2d");
       const scoreValueEl = document.getElementById("scoreValue");
       const bestScoreValueEl = document.getElementById("bestScoreValue");
       const maxTileValueEl = document.getElementById("maxTileValue");
@@ -213,6 +245,8 @@
       let score = 0;
       let bestScore = Number(localStorage.getItem(STORAGE_KEY_BEST) || 0);
       let movesCount = 0;
+      let comboStreak = 0;
+      let achievedMilestones = new Set();
       let undoSnapshot = null;
       let isGameOver = false;
       let hasWon2048 = false;
@@ -220,6 +254,12 @@
       let soundEnabled = true;
       let audioCtx = null;
       let toastTimer = null;
+
+      // 粒子、冲击波光环、拖尾与浮动飘字特效队列
+      let particles = [];
+      let shockwaves = [];
+      let trailStreaks = [];
+      let floatingTexts = [];
 
       function showToast(msg) {
         if (!toastNotice) return;
@@ -231,7 +271,287 @@
         }, 2200);
       }
 
-      // Web Audio 合成音效
+      function triggerElementBump(el, className) {
+        if (!el) return;
+        el.classList.remove(className);
+        void el.offsetWidth;
+        el.classList.add(className);
+      }
+
+      // 棋盘格子中心坐标转换为 fxCanvas 坐标
+      function cellCenterInFx(r, c) {
+        const w = fxCanvas.width;
+        const pad = 10;
+        const gap = 10;
+        const inner = w - pad * 2;
+        const cellSize = (inner - gap * 3) / 4;
+        return {
+          x: pad + c * (cellSize + gap) + cellSize / 2,
+          y: pad + r * (cellSize + gap) + cellSize / 2,
+          cellSize: cellSize
+        };
+      }
+
+      // 生成合并爆炸粒子、能量光环与浮动加分
+      function spawnMergeEffects(r, c, mergedVal, combo, multiMergeCount) {
+        const pos = cellCenterInFx(r, c);
+        const baseColor = TILE_FX_COLORS[mergedVal] || "#38bdf8";
+        const isBig = mergedVal >= 128;
+
+        // 1. 扩散能量光环 (Shockwave Ring)
+        shockwaves.push({
+          x: pos.x,
+          y: pos.y,
+          radius: pos.cellSize * 0.25,
+          maxRadius: pos.cellSize * (isBig ? 1.35 : 0.95),
+          color: baseColor,
+          lineWidth: isBig ? 4.5 : 3,
+          alpha: 0.92,
+          decay: isBig ? 0.032 : 0.045
+        });
+
+        if (isBig) {
+          shockwaves.push({
+            x: pos.x,
+            y: pos.y,
+            radius: pos.cellSize * 0.1,
+            maxRadius: pos.cellSize * 1.65,
+            color: "#facc15",
+            lineWidth: 2.5,
+            alpha: 0.85,
+            decay: 0.028
+          });
+        }
+
+        // 2. 绽放星芒与几何粒子 (Spark & Star Burst)
+        const count = isBig ? 26 : 14;
+        const palette = [baseColor, "#ffffff", "#38bdf8", "#facc15", "#f472b6"];
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.35;
+          const speed = (isBig ? 2.4 : 1.7) + Math.random() * (isBig ? 3.8 : 2.5);
+          const shapes = ["star", "circle", "diamond"];
+          particles.push({
+            x: pos.x,
+            y: pos.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 0.4,
+            gravity: 0.09,
+            drag: 0.95,
+            size: (isBig ? 4.5 : 3.4) + Math.random() * 3.2,
+            color: i % 3 === 0 ? baseColor : palette[Math.floor(Math.random() * palette.length)],
+            alpha: 1,
+            decay: 0.022 + Math.random() * 0.015,
+            rotation: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 0.18,
+            shape: shapes[i % shapes.length]
+          });
+        }
+
+        // 3. 浮动加分文字
+        floatingTexts.push({
+          x: pos.x,
+          y: pos.y - 6,
+          vy: -1.35,
+          text: "+" + mergedVal,
+          color: baseColor,
+          size: isBig ? 20 : 16,
+          alpha: 1,
+          decay: 0.022
+        });
+      }
+
+      // 滑动残影光带
+      function spawnSlideTrail(fromR, fromC, toR, toC, val) {
+        const dist = Math.abs(toR - fromR) + Math.abs(toC - fromC);
+        if (dist < 1) return;
+        const p1 = cellCenterInFx(fromR, fromC);
+        const p2 = cellCenterInFx(toR, toC);
+        const color = TILE_FX_COLORS[val] || "#38bdf8";
+        trailStreaks.push({
+          x1: p1.x,
+          y1: p1.y,
+          x2: p2.x,
+          y2: p2.y,
+          width: p1.cellSize * 0.52,
+          color: color,
+          alpha: 0.32,
+          decay: 0.045
+        });
+      }
+
+      // 里程碑礼花喷泉 (首次合成 128 / 256 / 512 / 1024 / 2048)
+      function spawnMilestoneFireworks(tileVal) {
+        const cx = fxCanvas.width / 2;
+        const cy = fxCanvas.height / 2;
+        const colors = ["#38bdf8", "#2563eb", "#10b981", "#f59e0b", "#ec4899", "#a855f7"];
+        for (let i = 0; i < 42; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 2 + Math.random() * 5.2;
+          particles.push({
+            x: cx + (Math.random() - 0.5) * 80,
+            y: cy + (Math.random() - 0.5) * 80,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 1.2,
+            gravity: 0.1,
+            drag: 0.96,
+            size: 4.5 + Math.random() * 4,
+            color: colors[i % colors.length],
+            alpha: 1,
+            decay: 0.016 + Math.random() * 0.01,
+            rotation: Math.random() * Math.PI * 2,
+            vRot: (Math.random() - 0.5) * 0.22,
+            shape: i % 2 === 0 ? "star" : "diamond"
+          });
+        }
+        floatingTexts.push({
+          x: cx,
+          y: cy - 24,
+          vy: -1.1,
+          text: "✦ 解锁 " + tileVal + " ✦",
+          color: TILE_FX_COLORS[tileVal] || "#ec4899",
+          size: 22,
+          alpha: 1,
+          decay: 0.016
+        });
+      }
+
+      function drawFourPointStar(ctx, x, y, r, rot) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const rad = i % 2 === 0 ? r : r * 0.38;
+          const ang = (i * Math.PI) / 4;
+          const px = Math.cos(ang) * rad;
+          const py = Math.sin(ang) * rad;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      function renderFxLoop() {
+        const rect = boardWrap.getBoundingClientRect();
+        if (rect.width > 0 && Math.abs(fxCanvas.width - rect.width) > 2) {
+          fxCanvas.width = rect.width;
+          fxCanvas.height = rect.height;
+        }
+
+        fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+        // 1. 绘制滑动残影光带
+        if (trailStreaks.length > 0) {
+          const nextTrails = [];
+          for (let i = 0; i < trailStreaks.length; i++) {
+            const tr = trailStreaks[i];
+            tr.alpha -= tr.decay;
+            if (tr.alpha > 0) {
+              fxCtx.save();
+              fxCtx.globalAlpha = tr.alpha;
+              const grad = fxCtx.createLinearGradient(tr.x1, tr.y1, tr.x2, tr.y2);
+              grad.addColorStop(0, "rgba(255,255,255,0)");
+              grad.addColorStop(1, tr.color);
+              fxCtx.strokeStyle = grad;
+              fxCtx.lineWidth = tr.width;
+              fxCtx.lineCap = "round";
+              fxCtx.beginPath();
+              fxCtx.moveTo(tr.x1, tr.y1);
+              fxCtx.lineTo(tr.x2, tr.y2);
+              fxCtx.stroke();
+              fxCtx.restore();
+              nextTrails.push(tr);
+            }
+          }
+          trailStreaks = nextTrails;
+        }
+
+        // 2. 绘制能量扩散光环
+        if (shockwaves.length > 0) {
+          const nextWaves = [];
+          for (let i = 0; i < shockwaves.length; i++) {
+            const sw = shockwaves[i];
+            sw.radius += (sw.maxRadius - sw.radius) * 0.22;
+            sw.alpha -= sw.decay;
+            if (sw.alpha > 0.02) {
+              fxCtx.save();
+              fxCtx.globalAlpha = sw.alpha;
+              fxCtx.strokeStyle = sw.color;
+              fxCtx.lineWidth = sw.lineWidth;
+              fxCtx.beginPath();
+              fxCtx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+              fxCtx.stroke();
+              fxCtx.restore();
+              nextWaves.push(sw);
+            }
+          }
+          shockwaves = nextWaves;
+        }
+
+        // 3. 绘制爆炸粒子与星芒
+        if (particles.length > 0) {
+          const nextParticles = [];
+          for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.vx *= p.drag;
+            p.vy = p.vy * p.drag + p.gravity;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rotation += p.vRot;
+            p.alpha -= p.decay;
+
+            if (p.alpha > 0.02) {
+              fxCtx.save();
+              fxCtx.globalAlpha = p.alpha;
+              fxCtx.fillStyle = p.color;
+              if (p.shape === "star") {
+                drawFourPointStar(fxCtx, p.x, p.y, p.size * 1.35, p.rotation);
+              } else if (p.shape === "diamond") {
+                fxCtx.translate(p.x, p.y);
+                fxCtx.rotate(p.rotation);
+                fxCtx.fillRect(-p.size * 0.7, -p.size * 0.7, p.size * 1.4, p.size * 1.4);
+              } else {
+                fxCtx.beginPath();
+                fxCtx.arc(p.x, p.y, p.size * 0.75, 0, Math.PI * 2);
+                fxCtx.fill();
+              }
+              fxCtx.restore();
+              nextParticles.push(p);
+            }
+          }
+          particles = nextParticles;
+        }
+
+        // 4. 绘制浮动加分与连击 Combo 文字
+        if (floatingTexts.length > 0) {
+          const nextTexts = [];
+          for (let i = 0; i < floatingTexts.length; i++) {
+            const ft = floatingTexts[i];
+            ft.y += ft.vy;
+            ft.alpha -= ft.decay;
+            if (ft.alpha > 0.02) {
+              fxCtx.save();
+              fxCtx.globalAlpha = ft.alpha;
+              fxCtx.font = "800 " + ft.size + "px " + getComputedStyle(document.body).fontFamily;
+              fxCtx.textAlign = "center";
+              fxCtx.strokeStyle = "rgba(255, 255, 255, 0.96)";
+              fxCtx.lineWidth = 4;
+              fxCtx.fillStyle = ft.color;
+              fxCtx.strokeText(ft.text, ft.x, ft.y);
+              fxCtx.fillText(ft.text, ft.x, ft.y);
+              fxCtx.restore();
+              nextTexts.push(ft);
+            }
+          }
+          floatingTexts = nextTexts;
+        }
+
+        requestAnimationFrame(renderFxLoop);
+      }
+
+      // Web Audio 合成音效（支持连击升调与多合一和弦）
       function playTone(freq, duration, type, gainVal, delaySec) {
         if (!soundEnabled) return;
         try {
@@ -258,13 +578,17 @@
       }
 
       function sfxSlide() {
-        playTone(290, 0.06, "triangle", 0.08, 0);
+        playTone(290, 0.055, "triangle", 0.07, 0);
       }
 
-      function sfxMerge(maxMergedVal) {
-        const pitch = Math.min(880, 360 + Math.log2(maxMergedVal || 4) * 45);
+      function sfxMerge(maxMergedVal, comboCount) {
+        const comboBoost = Math.min(220, (comboCount - 1) * 28);
+        const pitch = Math.min(980, 340 + Math.log2(maxMergedVal || 4) * 44 + comboBoost);
         playTone(pitch, 0.11, "triangle", 0.12, 0);
-        playTone(pitch * 1.25, 0.12, "sine", 0.1, 0.04);
+        playTone(pitch * 1.25, 0.13, "sine", 0.1, 0.035);
+        if (maxMergedVal >= 128 || comboCount >= 3) {
+          playTone(pitch * 1.5, 0.16, "triangle", 0.09, 0.07);
+        }
       }
 
       function sfxWin() {
@@ -333,14 +657,22 @@
         return false;
       }
 
-      function updateHud() {
+      function updateHud(scoreGained, maxTileIncreased) {
         scoreValueEl.textContent = String(score);
         bestScoreValueEl.textContent = String(bestScore);
         maxTileValueEl.textContent = String(getMaxTile(grid));
         movesCountValueEl.textContent = String(movesCount);
+
+        if (scoreGained > 0) {
+          triggerElementBump(scoreValueEl, "is-bumping");
+        }
+        if (maxTileIncreased) {
+          triggerElementBump(maxTileValueEl, "is-bumping");
+        }
       }
 
-      function renderTiles(newSpot, mergedCoordsSet) {
+      // 渲染方块并通过 Web Animations API 播放真实滑动位移动画
+      function renderTiles(newSpot, mergedCoordsSet, moveMap) {
         tileLayer.innerHTML = "";
         const layerWidth = tileLayer.clientWidth || 348;
         const gap = 10;
@@ -354,18 +686,42 @@
             const tile = document.createElement("div");
             tile.className = "tile-2048";
             tile.setAttribute("data-val", String(val));
+            if (val >= 128) {
+              tile.classList.add("is-high-tier");
+            }
             if (val > 2048) {
               tile.classList.add("is-super");
             }
+
+            const key = r + "," + c;
             if (newSpot && newSpot.r === r && newSpot.c === c) {
               tile.classList.add("is-new");
-            } else if (mergedCoordsSet && mergedCoordsSet.has(r + "," + c)) {
+            } else if (mergedCoordsSet && mergedCoordsSet.has(key)) {
               tile.classList.add("is-merged");
             }
 
             const tx = c * (cellSize + gap);
             const ty = r * (cellSize + gap);
             tile.style.transform = "translate(" + tx + "px, " + ty + "px)";
+
+            // 若有滑动来源坐标，使用 Web Animations API 平滑滑入目标格
+            if (moveMap && moveMap.has(key) && typeof tile.animate === "function") {
+              const from = moveMap.get(key);
+              const fx = from.fromC * (cellSize + gap);
+              const fy = from.fromR * (cellSize + gap);
+              if (fx !== tx || fy !== ty) {
+                tile.animate(
+                  [
+                    { transform: "translate(" + fx + "px, " + fy + "px)" },
+                    { transform: "translate(" + tx + "px, " + ty + "px)" }
+                  ],
+                  {
+                    duration: 120,
+                    easing: "cubic-bezier(0.2, 0.9, 0.3, 1)"
+                  }
+                );
+              }
+            }
 
             const inner = document.createElement("div");
             inner.className = "tile-2048-inner";
@@ -377,31 +733,50 @@
         }
       }
 
-      // 处理单行向左滑动与合并
-      function slideAndMergeLine(line) {
-        const nonZero = line.filter(function (v) { return v !== 0; });
-        const result = [];
-        const mergedIndices = [];
-        let gained = 0;
-        let maxMerged = 0;
-
-        let i = 0;
-        while (i < nonZero.length) {
-          if (i + 1 < nonZero.length && nonZero[i] === nonZero[i + 1]) {
-            const mergedVal = nonZero[i] * 2;
-            result.push(mergedVal);
-            mergedIndices.push(result.length - 1);
-            gained += mergedVal;
-            if (mergedVal > maxMerged) maxMerged = mergedVal;
-            i += 2;
-          } else {
-            result.push(nonZero[i]);
-            i += 1;
+      // 处理单行向左滑动与合并，同时记录每个目标格的起始索引供滑动轨迹动画使用
+      function slideAndMergeLineWithOrigins(line) {
+        const items = [];
+        for (let idx = 0; idx < SIZE; idx++) {
+          if (line[idx] !== 0) {
+            items.push({ val: line[idx], origIdx: idx });
           }
         }
 
-        while (result.length < SIZE) {
-          result.push(0);
+        const result = [0, 0, 0, 0];
+        const mergedIndices = [];
+        const origins = []; // { targetIdx, fromIdx, val, merged }
+        let gained = 0;
+        let maxMerged = 0;
+
+        let writeIdx = 0;
+        let i = 0;
+        while (i < items.length) {
+          if (i + 1 < items.length && items[i].val === items[i + 1].val) {
+            const mergedVal = items[i].val * 2;
+            result[writeIdx] = mergedVal;
+            mergedIndices.push(writeIdx);
+            origins.push({
+              targetIdx: writeIdx,
+              fromIdx: items[i + 1].origIdx,
+              secondaryFromIdx: items[i].origIdx,
+              val: mergedVal,
+              merged: true
+            });
+            gained += mergedVal;
+            if (mergedVal > maxMerged) maxMerged = mergedVal;
+            writeIdx += 1;
+            i += 2;
+          } else {
+            result[writeIdx] = items[i].val;
+            origins.push({
+              targetIdx: writeIdx,
+              fromIdx: items[i].origIdx,
+              val: items[i].val,
+              merged: false
+            });
+            writeIdx += 1;
+            i += 1;
+          }
         }
 
         let changed = false;
@@ -417,7 +792,8 @@
           changed: changed,
           gained: gained,
           maxMerged: maxMerged,
-          mergedIndices: mergedIndices
+          mergedIndices: mergedIndices,
+          origins: origins
         };
       }
 
@@ -427,18 +803,21 @@
         const prevGrid = cloneGrid(grid);
         const prevScore = score;
         const prevMoves = movesCount;
+        const prevMaxTile = getMaxTile(grid);
 
         let anyChanged = false;
         let totalGained = 0;
         let highestMerged = 0;
         const mergedCoordsSet = new Set();
+        const mergedList = [];
+        const moveMap = new Map();
 
         if (direction === "left" || direction === "right") {
           for (let r = 0; r < SIZE; r++) {
             let row = grid[r].slice();
             if (direction === "right") row.reverse();
 
-            const res = slideAndMergeLine(row);
+            const res = slideAndMergeLineWithOrigins(row);
             if (res.changed) anyChanged = true;
             totalGained += res.gained;
             if (res.maxMerged > highestMerged) highestMerged = res.maxMerged;
@@ -447,9 +826,19 @@
             if (direction === "right") finalRow.reverse();
             grid[r] = finalRow;
 
+            res.origins.forEach(function (o) {
+              const targetCol = direction === "right" ? (SIZE - 1 - o.targetIdx) : o.targetIdx;
+              const fromCol = direction === "right" ? (SIZE - 1 - o.fromIdx) : o.fromIdx;
+              moveMap.set(r + "," + targetCol, { fromR: r, fromC: fromCol });
+              if (fromCol !== targetCol) {
+                spawnSlideTrail(r, fromCol, r, targetCol, o.val);
+              }
+            });
+
             res.mergedIndices.forEach(function (idx) {
               const targetCol = direction === "right" ? (SIZE - 1 - idx) : idx;
               mergedCoordsSet.add(r + "," + targetCol);
+              mergedList.push({ r: r, c: targetCol, val: grid[r][targetCol] });
             });
           }
         } else if (direction === "up" || direction === "down") {
@@ -457,7 +846,7 @@
             let col = [grid[0][c], grid[1][c], grid[2][c], grid[3][c]];
             if (direction === "down") col.reverse();
 
-            const res = slideAndMergeLine(col);
+            const res = slideAndMergeLineWithOrigins(col);
             if (res.changed) anyChanged = true;
             totalGained += res.gained;
             if (res.maxMerged > highestMerged) highestMerged = res.maxMerged;
@@ -468,9 +857,19 @@
               grid[r][c] = finalCol[r];
             }
 
+            res.origins.forEach(function (o) {
+              const targetRow = direction === "down" ? (SIZE - 1 - o.targetIdx) : o.targetIdx;
+              const fromRow = direction === "down" ? (SIZE - 1 - o.fromIdx) : o.fromIdx;
+              moveMap.set(targetRow + "," + c, { fromR: fromRow, fromC: c });
+              if (fromRow !== targetRow) {
+                spawnSlideTrail(fromRow, c, targetRow, c, o.val);
+              }
+            });
+
             res.mergedIndices.forEach(function (idx) {
               const targetRow = direction === "down" ? (SIZE - 1 - idx) : idx;
               mergedCoordsSet.add(targetRow + "," + c);
+              mergedList.push({ r: targetRow, c: c, val: grid[targetRow][c] });
             });
           }
         }
@@ -480,9 +879,16 @@
         undoSnapshot = {
           grid: prevGrid,
           score: prevScore,
-          movesCount: prevMoves
+          movesCount: prevMoves,
+          comboStreak: comboStreak
         };
         undoMoveBtn.disabled = false;
+
+        if (mergedList.length > 0) {
+          comboStreak += 1;
+        } else {
+          comboStreak = 0;
+        }
 
         score += totalGained;
         movesCount += 1;
@@ -492,16 +898,55 @@
         }
 
         const newSpot = spawnRandomTile(grid);
-        updateHud();
-        renderTiles(newSpot, mergedCoordsSet);
+        const currentMax = getMaxTile(grid);
+        updateHud(totalGained, currentMax > prevMaxTile);
+        renderTiles(newSpot, mergedCoordsSet, moveMap);
 
-        if (highestMerged > 0) {
-          sfxMerge(highestMerged);
+        // 触发棋盘方向微震与合并粒子/光环/连击飘字特效
+        if (highestMerged >= 128 || mergedList.length >= 2) {
+          triggerElementBump(boardWrap, "shake-heavy");
+        } else {
+          triggerElementBump(boardWrap, "bump-" + direction);
+        }
+
+        if (mergedList.length > 0) {
+          mergedList.forEach(function (m) {
+            spawnMergeEffects(m.r, m.c, m.val, comboStreak, mergedList.length);
+          });
+
+          if (mergedList.length >= 2 || comboStreak >= 2) {
+            const cx = fxCanvas.width / 2;
+            const cy = fxCanvas.height / 2;
+            let banner = "";
+            if (mergedList.length >= 2 && comboStreak >= 2) {
+              banner = mergedList.length + "连合 · COMBO ×" + comboStreak + " 🔥";
+            } else if (mergedList.length >= 2) {
+              banner = "⚡ " + mergedList.length + "连合!";
+            } else {
+              banner = "COMBO ×" + comboStreak + " 🔥";
+            }
+            floatingTexts.push({
+              x: cx,
+              y: cy + 12,
+              vy: -1.45,
+              text: banner,
+              color: comboStreak >= 4 ? "#dc2626" : "#2563eb",
+              size: 19,
+              alpha: 1,
+              decay: 0.02
+            });
+          }
+
+          if (currentMax >= 128 && currentMax > prevMaxTile && !achievedMilestones.has(currentMax)) {
+            achievedMilestones.add(currentMax);
+            spawnMilestoneFireworks(currentMax);
+          }
+
+          sfxMerge(highestMerged, comboStreak);
         } else {
           sfxSlide();
         }
 
-        const currentMax = getMaxTile(grid);
         if (currentMax >= 2048 && !hasWon2048 && !keepPlayingAfter2048) {
           hasWon2048 = true;
           isGameOver = true;
@@ -530,12 +975,13 @@
         grid = cloneGrid(undoSnapshot.grid);
         score = undoSnapshot.score;
         movesCount = undoSnapshot.movesCount;
+        comboStreak = undoSnapshot.comboStreak || 0;
         undoSnapshot = null;
         undoMoveBtn.disabled = true;
         isGameOver = false;
         gameOverOverlay.classList.remove("is-visible");
-        updateHud();
-        renderTiles(null, null);
+        updateHud(0, false);
+        renderTiles(null, null, null);
         showToast("已撤回上一步移动");
       }
 
@@ -543,6 +989,8 @@
         grid = createEmptyGrid();
         score = 0;
         movesCount = 0;
+        comboStreak = 0;
+        achievedMilestones.clear();
         undoSnapshot = null;
         undoMoveBtn.disabled = true;
         isGameOver = false;
@@ -553,8 +1001,8 @@
 
         spawnRandomTile(grid);
         const second = spawnRandomTile(grid);
-        updateHud();
-        renderTiles(second, null);
+        updateHud(0, false);
+        renderTiles(second, null, null);
       }
 
       function toggleSound() {
@@ -618,7 +1066,7 @@
       });
 
       window.addEventListener("resize", function () {
-        renderTiles(null, null);
+        renderTiles(null, null, null);
       });
 
       restartGameBtn.addEventListener("click", function () {
@@ -673,7 +1121,7 @@
         pickWeightedBackground(true);
       });
 
-      // 右下角 Live2D 模型加载与上半身等比放大 (同时兼容 oh-my-live2d 与 live2d-widget)
+      // 右下角 Live2D 模型加载与上半身等比放大 + 点击事件穿透 (pointer-events: none)
       function loadExternalScript(src) {
         return new Promise(function (resolve, reject) {
           const s = document.createElement("script");
@@ -713,16 +1161,73 @@
             st.style.setProperty("height", boxH, "important");
             st.style.setProperty("overflow", "visible", "important");
             st.style.setProperty("clip-path", "inset(-600px -300px 0px -300px)", "important");
+            st.style.setProperty("pointer-events", "none", "important");
           });
 
           const canvases = document.querySelectorAll("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
           canvases.forEach(function (cvs) {
             cvs.style.setProperty("transform-origin", "50% " + anchorY, "important");
             cvs.style.setProperty("transform", "translate(" + shiftX + ", " + shiftY + ") scale(" + zoom + ")", "important");
+            cvs.style.setProperty("pointer-events", "none", "important");
           });
         }
 
         syncDomStyles();
+        if (!window.__l2dPassthroughBound) {
+          window.__l2dPassthroughBound = true;
+          function forwardToLive2DCanvas(e, eventType, isPointer) {
+            if (e.__fromL2dPassthrough) return;
+            const cvs = document.querySelector("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
+            if (!cvs) return;
+            const rect = cvs.getBoundingClientRect();
+            const inside = (
+              e.clientX >= rect.left &&
+              e.clientX <= rect.right &&
+              e.clientY >= rect.top &&
+              e.clientY <= rect.bottom
+            );
+            // pointermove/mousemove 始终转发以保持视线跟随；按下/抬起/点击在模型区域内触发点击动作
+            if (!inside && eventType !== "pointermove" && eventType !== "mousemove" && eventType !== "pointerup" && eventType !== "mouseup") {
+              return;
+            }
+            try {
+              const initOpts = {
+                clientX: e.clientX,
+                clientY: e.clientY,
+                screenX: e.screenX,
+                screenY: e.screenY,
+                button: e.button || 0,
+                buttons: e.buttons || (eventType === "pointerdown" || eventType === "mousedown" ? 1 : 0),
+                bubbles: true,
+                cancelable: true,
+                view: window
+              };
+              let evt;
+              if (isPointer && typeof PointerEvent === "function") {
+                initOpts.pointerId = e.pointerId || 1;
+                initOpts.pointerType = e.pointerType || "mouse";
+                initOpts.isPrimary = e.isPrimary !== false;
+                evt = new PointerEvent(eventType, initOpts);
+              } else {
+                evt = new MouseEvent(eventType, initOpts);
+              }
+              evt.__fromL2dPassthrough = true;
+              cvs.dispatchEvent(evt);
+            } catch (err) {}
+          }
+
+          ["pointerdown", "pointermove", "pointerup"].forEach(function (type) {
+            window.addEventListener(type, function (e) {
+              forwardToLive2DCanvas(e, type, true);
+            }, { passive: true, capture: true });
+          });
+
+          ["mousedown", "mousemove", "mouseup", "click"].forEach(function (type) {
+            window.addEventListener(type, function (e) {
+              forwardToLive2DCanvas(e, type, false);
+            }, { passive: true, capture: true });
+          });
+        }
         let count = 0;
         const timer = setInterval(function () {
           syncDomStyles();
@@ -788,6 +1293,7 @@
 
       initLive2D();
       startNewGame();
+      requestAnimationFrame(renderFxLoop);
     })();
   </script>
 </body>
