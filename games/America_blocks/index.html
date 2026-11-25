@@ -8,8 +8,8 @@
   <meta name="description" content="5格正六边形棋盘消行拼图游戏" />
   <meta name="post-date" content="2026-11-23" />
   <meta name="post-tags" content="美国方块,六边形消行" />
-  <link rel="stylesheet" href="../../style.css?v=20261125b" />
-  <link rel="stylesheet" href="./style.css?v=20261125b" />
+  <link rel="stylesheet" href="../../style.css?v=20261125c" />
+  <link rel="stylesheet" href="./style.css?v=20261125c" />
   <style>
     /* 紧凑一屏双栏布局兜底（防止旧版缓存 style.css 导致计分栏或右侧拼图栏掉到下方） */
     .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
@@ -1145,16 +1145,73 @@
             st.style.setProperty("height", boxH, "important");
             st.style.setProperty("overflow", "visible", "important");
             st.style.setProperty("clip-path", "inset(-600px -300px 0px -300px)", "important");
+            st.style.setProperty("pointer-events", "none", "important");
           });
 
           const canvases = document.querySelectorAll("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
           canvases.forEach(function (cvs) {
             cvs.style.setProperty("transform-origin", "50% " + anchorY, "important");
             cvs.style.setProperty("transform", "translate(" + shiftX + ", " + shiftY + ") scale(" + zoom + ")", "important");
+            cvs.style.setProperty("pointer-events", "none", "important");
           });
         }
 
         syncDomStyles();
+        if (!window.__l2dPassthroughBound) {
+          window.__l2dPassthroughBound = true;
+          function forwardToLive2DCanvas(e, eventType, isPointer) {
+            if (e.__fromL2dPassthrough) return;
+            const cvs = document.querySelector("#oml2d-canvas, #oml2d-stage canvas, #live2dcanvas, #live2d-widget canvas");
+            if (!cvs) return;
+            const rect = cvs.getBoundingClientRect();
+            const inside = (
+              e.clientX >= rect.left &&
+              e.clientX <= rect.right &&
+              e.clientY >= rect.top &&
+              e.clientY <= rect.bottom
+            );
+            // pointermove/mousemove 始终转发以保持视线跟随；按下/抬起/点击在模型区域内触发点击动作
+            if (!inside && eventType !== "pointermove" && eventType !== "mousemove" && eventType !== "pointerup" && eventType !== "mouseup") {
+              return;
+            }
+            try {
+              const initOpts = {
+                clientX: e.clientX,
+                clientY: e.clientY,
+                screenX: e.screenX,
+                screenY: e.screenY,
+                button: e.button || 0,
+                buttons: e.buttons || (eventType === "pointerdown" || eventType === "mousedown" ? 1 : 0),
+                bubbles: true,
+                cancelable: true,
+                view: window
+              };
+              let evt;
+              if (isPointer && typeof PointerEvent === "function") {
+                initOpts.pointerId = e.pointerId || 1;
+                initOpts.pointerType = e.pointerType || "mouse";
+                initOpts.isPrimary = e.isPrimary !== false;
+                evt = new PointerEvent(eventType, initOpts);
+              } else {
+                evt = new MouseEvent(eventType, initOpts);
+              }
+              evt.__fromL2dPassthrough = true;
+              cvs.dispatchEvent(evt);
+            } catch (err) {}
+          }
+
+          ["pointerdown", "pointermove", "pointerup"].forEach(function (type) {
+            window.addEventListener(type, function (e) {
+              forwardToLive2DCanvas(e, type, true);
+            }, { passive: true, capture: true });
+          });
+
+          ["mousedown", "mousemove", "mouseup", "click"].forEach(function (type) {
+            window.addEventListener(type, function (e) {
+              forwardToLive2DCanvas(e, type, false);
+            }, { passive: true, capture: true });
+          });
+        }
         let count = 0;
         const timer = setInterval(function () {
           syncDomStyles();
