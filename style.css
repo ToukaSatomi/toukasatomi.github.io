@@ -1678,3 +1678,130 @@ body {
   touch-action: none;
 }
 
+/* ==========================================================================
+   11. “合成名校” (merge_universities.html) 专用一屏毛玻璃双栏与校徽图鉴样式
+   ========================================================================== */
+.glass-main-frame.game-uni-frame {
+  max-width: 900px;
+  padding: 15px 22px;
+}
+
+.uni-next-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.08);
+}
+
+.uni-next-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.03em;
+}
+
+.uni-next-name {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-top: 2px;
+}
+
+.uni-atlas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+  font-size: 0.73rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.uni-atlas-count {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.uni-atlas-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.uni-atlas-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.uni-atlas-chip.unlocked {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(37, 99, 235, 0.36);
+  box-shadow: 0 3px 10px -2px rgba(37, 99, 235, 0.14);
+}
+
+.uni-atlas-chip.current-max {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.34);
+  transform: translateY(-1px);
+}
+
+.uni-atlas-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1.5px solid rgba(15, 23, 42, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 2px;
+}
+
+.uni-atlas-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.uni-atlas-name {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 68px;
+}
+
+.uni-atlas-lv {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.56rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+#suikaCanvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 14px;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.08), 0 8px 22px -6px rgba(15, 23, 42, 0.14);
+}
