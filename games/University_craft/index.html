@@ -2,227 +2,144 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>合成名校 · TM_Sharweek</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&family=Noto+Serif+SC:wght@600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="../../style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>合成名校 | TM_Sharweek</title>
+  <meta name="post-title" content="合成名校" />
+  <meta name="description" content="15阶名校校徽物理碰撞合成游戏，从上海财经大学一路合成至普林斯顿大学" />
+  <meta name="post-date" content="2026-11-26" />
+  <meta name="post-tags" content="合成名校,合成大西瓜" />
+  <link rel="stylesheet" href="../../style.css?v=20261126a" />
+  <link rel="stylesheet" href="./style.css?v=20261126a" />
   <style>
-    :root { --bg-image: url("https://cdn.luogu.com.cn/upload/image_hosting/t55ghywt.png"); }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; overflow: hidden; font-family: "Inter", "PingFang SC", "Microsoft YaHei", sans-serif; color: #0f172a; }
-    body::before { content: ""; position: fixed; inset: 0; z-index: -2; background-image: var(--bg-image); background-size: cover; background-position: center; }
-    body::after { content: ""; position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 24%, rgba(255,255,255,0.08) 0%, rgba(15,23,42,0.24) 100%); }
-    .game-page-shell { height: 100vh; max-width: 1120px; margin: 0 auto; padding: 12px 20px; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
-    .game-topbar, .hud-stat-card, .board-glass-card, .tray-glass-panel { background: rgba(255,255,255,0.74); backdrop-filter: blur(18px) saturate(150%); border: 1px solid rgba(255,255,255,0.68); border-radius: 16px; }
-    .game-topbar { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; gap: 10px; }
-    .hud-stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-    .hud-stat-card { padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; }
-    .game-arena { display: grid; grid-template-columns: minmax(0, 1fr) 244px; gap: 12px; align-items: stretch; }
-    .board-glass-card { padding: 10px 14px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-    .tray-glass-panel { padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
-    .uni-atlas-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
-    .uni-atlas-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; border-radius: 10px; background: rgba(255,255,255,0.52); border: 1px solid rgba(15,23,42,0.08); transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; user-select: none; }
-    .uni-atlas-chip.unlocked { background: rgba(255,255,255,0.92); border-color: rgba(37,99,235,0.34); box-shadow: 0 3px 10px rgba(37,99,235,0.12); }
-    .uni-atlas-chip.current-max { border-color: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.38); transform: translateY(-1px); }
-    .uni-atlas-chip canvas { width: 32px; height: 32px; border-radius: 50%; }
+    /* 紧凑一屏双栏布局兜底（与美国方块、2048、无猜扫雷完全统一，电脑端一屏免滚动） */
+    .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
+    .glass-main-frame.game-uni-frame { max-width: 900px; padding: 15px 22px; }
+    .game-top-bar { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.72); }
+    .game-title-group, .top-action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .game-logo-badge { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg,#2563eb,#0ea5e9); color: #fff; font-weight: 800; font-size: 1.08rem; display: flex; align-items: center; justify-content: center; }
+    .game-title-text h1 { font-size: 1.28rem; font-weight: 800; line-height: 1.2; }
+    .hud-stats-row { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .hud-stat-card { padding: 7px 14px; border-radius: 14px; background: rgba(255,255,255,0.58); border: 1px solid rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: flex-start; }
+    .hud-stat-label { font-size: 0.72rem; font-weight: 700; color: #475569; }
+    .hud-stat-value { font-family: var(--font-mono, monospace); font-size: 1.22rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-top: 2px; }
+    .hud-stat-value.accent { color: #2563eb; }
+    .hud-stat-value.is-bumping { animation: hudScoreBump 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes hudScoreBump { 0% { transform: scale(1); } 45% { transform: scale(1.24); color: #2563eb; } 100% { transform: scale(1); } }
+    .game-arena { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 244px; gap: 14px; align-items: stretch; }
+    .board-glass-card { position: relative; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+    #suikaCanvas { display: block; max-width: 100%; height: auto; border-radius: 14px; cursor: pointer; touch-action: none; }
+    .tray-glass-panel { border-radius: 20px; background: rgba(255,255,255,0.52); border: 1px solid rgba(255,255,255,0.88); padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 7px; }
+    .uni-next-card { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 13px; background: rgba(255,255,255,0.66); border: 1px solid rgba(255,255,255,0.92); }
+    .uni-next-label { font-size: 0.68rem; font-weight: 700; color: #64748b; }
+    .uni-next-name { font-size: 0.84rem; font-weight: 800; color: #0f172a; margin-top: 2px; }
+    .uni-atlas-header { display: flex; align-items: center; justify-content: space-between; padding: 0 2px; font-size: 0.72rem; font-weight: 700; color: #475569; }
+    .uni-atlas-count { font-family: var(--font-mono, monospace); font-size: 0.72rem; font-weight: 800; color: #2563eb; }
+    .uni-atlas-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
+    .uni-atlas-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 2px; border-radius: 11px; background: rgba(255,255,255,0.52); border: 1px solid rgba(148,163,184,0.25); transition: all 0.2s ease; user-select: none; }
+    .uni-atlas-chip.unlocked { background: rgba(255,255,255,0.92); border-color: rgba(37,99,235,0.36); box-shadow: 0 3px 10px -2px rgba(37,99,235,0.14); }
+    .uni-atlas-chip.current-max { border-color: #f59e0b; box-shadow: 0 0 0 2px rgba(245,158,11,0.34); transform: translateY(-1px); }
+    .uni-atlas-thumb { width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 1.5px solid rgba(15,23,42,0.14); display: flex; align-items: center; justify-content: center; overflow: hidden; padding: 2px; }
+    .uni-atlas-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
     .uni-atlas-name { font-size: 0.62rem; font-weight: 700; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; }
-    .uni-atlas-lv { font-family: "JetBrains Mono", monospace; font-size: 0.56rem; font-weight: 700; color: #64748b; }
-    #suikaCanvas { border-radius: 14px; cursor: pointer; touch-action: none; display: block; box-shadow: inset 0 2px 10px rgba(15,23,42,0.08), 0 8px 24px rgba(15,23,42,0.12); }
-    #oml2d-stage, #oml2d-canvas, #live2d-widget, .live2d-widget-container { pointer-events: none !important; overflow: visible !important; clip-path: inset(-600px -300px 0px -300px) !important; }
-    @media (max-width: 820px) { html, body { overflow-y: auto; height: auto; } .game-page-shell { height: auto; } .game-arena { grid-template-columns: 1fr; } }
+    .uni-atlas-lv { font-family: var(--font-mono, monospace; font-size: 0.56rem; font-weight: 700; color: #64748b; }
+    .gameover-overlay { position: absolute; inset: 10px; border-radius: 18px; background: rgba(255,255,255,0.88); backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.28s ease; z-index: 40; }
+    .gameover-overlay.is-visible { opacity: 1; visibility: visible; }
+    @media (min-width: 641px) and (min-height: 580px) { html, body { height: 100vh; overflow: hidden; } .main-stage.game-page-stage { height: 100vh; } }
+    @media (max-width: 640px) { .hud-stats-row { grid-template-columns: repeat(2, 1fr); } .game-arena { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
-  <!-- 顶部左上角隐形侧边栏触发器 -->
-  <button class="stealth-sidebar-trigger" id="stealthSidebarBtn" aria-label="打开导航侧边栏" title="导航菜单">
-    <span class="trigger-icon">
-      <span></span>
-      <span></span>
-      <span></span>
-    </span>
-  </button>
-
-  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
-
-  <!-- 侧边栏抽屉 -->
-  <aside class="sidebar-drawer" id="sidebarDrawer" aria-hidden="true">
-    <div class="sidebar-header">
-      <div>
-        <div class="sidebar-brand">TM_Sharweek</div>
-        <div class="sidebar-tagline">个人主页与迷你游戏枢纽</div>
-      </div>
-      <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="关闭侧边栏">✕</button>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">站点导航</div>
-      <nav class="sidebar-nav-list">
-        <a class="sidebar-nav-item" href="../../index.html">
-          <span>🏠 返回主页</span>
-          <span class="nav-path">/index</span>
-        </a>
-        <a class="sidebar-nav-item" href="./american_blocks.html">
-          <span>🧩 美国方块</span>
-          <span class="nav-path">/hex</span>
-        </a>
-        <a class="sidebar-nav-item" href="./game_2048.html">
-          <span>🔢 2048</span>
-          <span class="nav-path">/2048</span>
-        </a>
-        <a class="sidebar-nav-item" href="./minesweeper.html">
-          <span>💣 无猜扫雷</span>
-          <span class="nav-path">/mine</span>
-        </a>
-        <a class="sidebar-nav-item" href="./sky_danmaku.html">
-          <span>✈️ 苍穹弹幕</span>
-          <span class="nav-path">/stg</span>
-        </a>
-        <a class="sidebar-nav-item" href="./merge_universities.html">
-          <span>🎓 合成名校</span>
-          <span class="nav-path">/uni</span>
-        </a>
-      </nav>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">外部链接</div>
-      <div class="sidebar-links">
-        <a class="sidebar-link-chip" href="https://www.cnblogs.com/sharweek" target="_blank" rel="noopener">
-          <span>📘 博客园 · sharweek</span>
-          <span>↗</span>
-        </a>
-        <a class="sidebar-link-chip" href="https://github.com/ToukaSatomi" target="_blank" rel="noopener">
-          <span>🐙 GitHub · ToukaSatomi</span>
-          <span>↗</span>
-        </a>
-      </div>
-    </div>
-
-    <div class="sidebar-footer">
-      <div>Hosted on GitHub Pages</div>
-      <div>toukasatomi.github.io</div>
-    </div>
-  </aside>
-
-  <!-- 游戏主容器（单屏 100vh 零滚动） -->
-  <div class="game-page-shell">
-    <header class="game-topbar">
-      <div class="game-topbar-left">
-        <a class="back-home-pill" href="../../index.html">← 主页</a>
-        <div class="game-title-block">
-          <h1>合成名校 · 15 阶高校进化</h1>
+  <main class="main-stage game-page-stage">
+    <div class="glass-main-frame game-page-frame game-uni-frame">
+      <!-- 1. 顶部操作栏（与美国方块、2048、无猜扫雷统一使用 .game-top-bar 和 .back-home-btn 样式） -->
+      <header class="game-top-bar">
+        <div class="game-title-group">
+          <div class="game-logo-badge">🎓</div>
+          <div class="game-title-text">
+            <h1>合成名校</h1>
+          </div>
         </div>
-      </div>
 
-      <div class="game-topbar-actions">
-        <button class="action-pill-btn" id="jostleBoxBtn" title="摇晃培养皿助推校徽碰撞（快捷键 R）">🌪 摇盒助推 (3)</button>
-        <button class="action-pill-btn" id="soundToggleBtn" title="切换音效">🔊 音效</button>
-        <button class="action-pill-btn primary-pill" id="restartGameBtn">↻ 重新开始</button>
-      </div>
-    </header>
+        <div class="top-action-group">
+          <button type="button" id="jostleBoxBtn" class="back-home-btn" title="摇晃培养皿助推校徽碰撞 (快捷键: E)">
+            🌪 摇盒 (3)
+          </button>
+          <button type="button" id="randomBgBtn" class="back-home-btn" title="按设定权重随机切换背景图">
+            🎲 <span id="currentBgLabel">切换背景</span>
+          </button>
+          <button type="button" id="toggleSoundBtn" class="back-home-btn" title="开关合成音效 (快捷键: M)">
+            🔊 音效
+          </button>
+          <button type="button" id="restartGameBtn" class="back-home-btn" title="重新开始新对局 (快捷键: R)">
+            ↻ 重开 (R)
+          </button>
+          <a href="../../index.html" id="backBlogHomeBtn" class="back-home-btn is-primary">
+            ← 返回主页
+          </a>
+        </div>
+      </header>
 
-    <!-- 4 张紧凑数据卡片 -->
-    <section class="hud-stats-row" aria-label="游戏状态统计">
-      <div class="hud-stat-card">
-        <div class="hud-stat-label">当前总分 · SCORE</div>
-        <div class="hud-stat-value accent-blue" id="currentScoreEl">0</div>
-      </div>
-      <div class="hud-stat-card">
-        <div class="hud-stat-label">最高纪录 · BEST</div>
-        <div class="hud-stat-value accent-amber" id="bestScoreEl">0</div>
-      </div>
-      <div class="hud-stat-card">
-        <div class="hud-stat-label">最高学府 · TOP UNI</div>
-        <div class="hud-stat-value" id="topUniEl" style="font-size:0.95rem;">Lv.1 上财</div>
-      </div>
-      <div class="hud-stat-card">
-        <div class="hud-stat-label">最大连合 · COMBO</div>
-        <div class="hud-stat-value accent-emerald" id="maxComboEl">×1</div>
-      </div>
-    </section>
-
-    <!-- 核心双栏竞技场 -->
-    <main class="game-arena">
-      <section class="board-glass-card" id="arenaCard">
-        <canvas id="suikaCanvas" width="460" height="404"></canvas>
+      <!-- 2. 四项计分与统计数据栏 -->
+      <section class="hud-stats-row" aria-label="游戏计分面板">
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">当前得分 / SCORE</span>
+          <span id="currentScoreEl" class="hud-stat-value accent">0</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最高纪录 / BEST</span>
+          <span id="bestScoreEl" class="hud-stat-value">0</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最高学府 / TOP UNI</span>
+          <span id="topUniEl" class="hud-stat-value" style="font-size: 1.05rem;">Lv.1 上财</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最高连合 / MAX COMBO</span>
+          <span id="maxComboEl" class="hud-stat-value">×1</span>
+        </div>
       </section>
 
-      <!-- 右侧：下一枚预告 + 15 阶名校校徽图鉴 -->
-      <aside class="tray-glass-panel" aria-label="名校图鉴与预告">
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:rgba(255,255,255,0.62);border-radius:12px;border:1px solid rgba(15,23,42,0.08);">
-          <div>
-            <div style="font-size:0.68rem;font-weight:700;color:#64748b;letter-spacing:0.04em;">NEXT EMBLEM · 下一枚</div>
-            <div id="nextUniNameEl" style="font-size:0.86rem;font-weight:800;color:#0f172a;margin-top:2px;">Lv.1 上海财经大学</div>
+      <!-- 3. 左侧合成培养皿主画布 + 右侧 15 阶名校校徽图鉴 -->
+      <section class="game-arena" aria-label="合成培养皿与右侧校徽图鉴">
+        <div class="board-glass-card" id="arenaCard">
+          <canvas id="suikaCanvas" width="440" height="384" aria-label="合成名校物理画布"></canvas>
+
+          <div id="gameOverOverlay" class="gameover-overlay" role="dialog" aria-modal="true">
+            <h2 id="gameOverTitle">培养皿已满 · 学术结算</h2>
+            <p id="gameOverSummary"></p>
+            <button type="button" id="overlayRestartBtn" class="back-home-btn is-primary" style="padding: 9px 22px; font-size: 0.9rem;">
+              ↻ 再来一局
+            </button>
           </div>
-          <canvas id="nextPreviewCanvas" width="44" height="44" style="width:44px;height:44px;border-radius:50%;box-shadow:0 3px 10px rgba(15,23,42,0.16);"></canvas>
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;">
-          <span class="tray-title" style="font-size:0.74rem;">15 阶名校演进图谱（小 → 大）</span>
-          <span id="unlockedCountEl" style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;font-weight:700;color:#2563eb;">1 / 15</span>
-        </div>
+        <aside class="tray-glass-panel" aria-label="下一枚预告与15阶名校图鉴">
+          <div class="uni-next-card">
+            <div>
+              <div class="uni-next-label">NEXT · 下一枚校徽</div>
+              <div id="nextUniNameEl" class="uni-next-name">Lv.1 上海财经大学</div>
+            </div>
+            <div class="uni-atlas-thumb" style="width: 42px; height: 42px;">
+              <img id="nextPreviewImg" src="https://upload.wikimedia.org/wikipedia/zh/4/4d/Shanghai_University_of_Finance_and_Economics_logo.jpg" alt="下一枚校徽" referrerpolicy="no-referrer" />
+            </div>
+          </div>
 
-        <div class="uni-atlas-grid" id="uniAtlasGrid"></div>
-      </aside>
-    </main>
-  </div>
+          <div class="uni-atlas-header">
+            <span>15 阶高校校徽（小 → 大）</span>
+            <span id="unlockedCountEl" class="uni-atlas-count">1 / 15</span>
+          </div>
 
-  <!-- 游戏结束弹窗 -->
-  <div class="game-over-overlay" id="gameOverModal" aria-hidden="true">
-    <div class="game-over-card">
-      <div class="game-over-badge" id="modalBadge">🎓 学术培养皿已满 · 结算成绩</div>
-      <h2 class="game-over-title" id="modalTitle">名校合成报告</h2>
-      <p class="game-over-desc" id="modalDesc">所有校徽均已完成本轮学术碰撞，来看看你的最高学府纪录。</p>
-
-      <div class="game-over-stats">
-        <div class="modal-stat-box">
-          <div class="modal-stat-label">本局得分</div>
-          <div class="modal-stat-num" id="finalScoreEl">0</div>
-        </div>
-        <div class="modal-stat-box">
-          <div class="modal-stat-label">历史最高</div>
-          <div class="modal-stat-num" id="finalBestEl">0</div>
-        </div>
-        <div class="modal-stat-box">
-          <div class="modal-stat-label">最高学府</div>
-          <div class="modal-stat-num" id="finalUniEl" style="font-size:0.95rem;">上财</div>
-        </div>
-        <div class="modal-stat-box">
-          <div class="modal-stat-label">总合成次数</div>
-          <div class="modal-stat-num" id="finalMergesEl">0</div>
-        </div>
-      </div>
-
-      <button class="modal-restart-btn" id="modalRestartBtn">再来一局 · 冲击普林斯顿</button>
+          <div class="uni-atlas-grid" id="uniAtlasGrid"></div>
+        </aside>
+      </section>
     </div>
-  </div>
+  </main>
+
+  <div id="toastNotice" class="toast-notice" role="status" aria-live="polite"></div>
 
   <script>
     const BLOG_CONFIG = {
-      live2d: {
-        enabled: true,
-        engine: "oml2d",
-        scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
-        oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
-        modelJsonUrl: "../../102800/model.model3.json",
-        fallbackModelJsonUrl: "https://cdn.jsdelivr.net/gh/evrstr/live2d-widget-models/live2d_evrstr/koharu/model.json",
-        display: {
-          position: "right",
-          width: 280,
-          height: 300,
-          boxHeight: 300,
-          upperZoom: 2.25,
-          anchorY: "0%",
-          shiftX: "10px",
-          shiftY: "20px",
-          hOffset: 12,
-          vOffset: 0,
-          scale: 1
-        }
-      },
       backgrounds: [
         { name: "阿绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/t55ghywt.png", weight: 13 },
         { name: "二重变革", url: "https://cdn.luogu.com.cn/upload/image_hosting/5c26cnb1.png", weight: 3 },
@@ -236,851 +153,379 @@
         { name: "待我归乡", url: "https://cdn.luogu.com.cn/upload/image_hosting/vgphr83p.png", weight: 1 },
         { name: "遗忘的物语", url: "https://cdn.luogu.com.cn/upload/image_hosting/ksdftve2.png", weight: 1 },
         { name: "病房组", url: "https://cdn.luogu.com.cn/upload/image_hosting/a4j7q31r.png", weight: 1 }
-      ]
+      ],
+
+      live2d: {
+        enabled: true,
+        engine: "oml2d",
+        scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
+        oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
+        modelJsonUrl: "../../102800/model.model3.json",
+        display: {
+          position: "right",
+          width: 280,
+          height: 300,
+          boxHeight: 300,
+          upperZoom: 2.25,
+          anchorY: "0%",
+          shiftX: "10px",
+          shiftY: "20px",
+          hOffset: 12,
+          vOffset: 0,
+          scale: 1
+        },
+        mobile: { show: true, scale: 0.6 },
+        react: { opacityDefault: 0.95, opacityOnHover: 1 }
+      }
     };
 
-    function pickWeightedBackground(list) {
-      if (!Array.isArray(list) || list.length === 0) return null;
-      const totalWeight = list.reduce((sum, item) => sum + (Number(item.weight) > 0 ? Number(item.weight) : 1), 0);
-      let rand = Math.random() * totalWeight;
-      for (const item of list) {
-        const w = Number(item.weight) > 0 ? Number(item.weight) : 1;
-        if (rand < w) return item;
-        rand -= w;
-      }
-      return list[0];
-    }
-
-    function applyRandomBackground() {
-      const chosen = pickWeightedBackground(BLOG_CONFIG.backgrounds);
-      if (chosen && chosen.url) {
-        document.documentElement.style.setProperty("--bg-image", `url("${chosen.url}")`);
-      }
-    }
-
     /* ============================================================================
-       15 阶高校校徽配置（从小到大严格对应用户指定的 15 所名校）
+       15 阶高校校徽配置（全部采用真实网络校徽图片链接 + 备用镜像源）
+       从小到大严格对应：
+       1.上海财经大学 -> 2.北京邮电大学 -> 3.南方科技大学 -> 4.上海科技大学 -> 5.西湖大学 ->
+       6.中国人民大学 -> 7.南京大学 -> 8.中国科学院大学 -> 9.上海交通大学 -> 10.清华大学 ->
+       11.北京大学 -> 12.东京大学 -> 13.MIT -> 14.巴黎高师 -> 15.普林斯顿大学
        ============================================================================ */
     const UNIVERSITIES = [
       {
         level: 0,
         name: "上海财经大学",
         short: "上财",
-        en: "SUFE",
         year: "1917",
-        motto: "厚德博学 经济匡时",
         radius: 16,
         score: 4,
-        primary: "#b91c1c",
-        secondary: "#7f1d1d",
+        primary: "#8c1515",
         accent: "#fbbf24",
-        ringText: "SHANGHAI UNIVERSITY OF FINANCE & ECONOMICS",
-        motif: "sufe_coin"
+        logoUrl: "https://upload.wikimedia.org/wikipedia/zh/4/4d/Shanghai_University_of_Finance_and_Economics_logo.jpg",
+        backupUrls: [
+          "https://thumb.wikimedia.org/wikipedia/zh/thumb/4/4d/Shanghai_University_of_Finance_and_Economics_logo.jpg/400px-Shanghai_University_of_Finance_and_Economics_logo.jpg"
+        ]
       },
       {
         level: 1,
         name: "北京邮电大学",
         short: "北邮",
-        en: "BUPT",
         year: "1955",
-        motto: "厚德博学 敬业乐群",
         radius: 20,
         score: 10,
-        primary: "#1e40af",
-        secondary: "#172554",
+        primary: "#003a8c",
         accent: "#93c5fd",
-        ringText: "BEIJING UNIVERSITY OF POSTS & TELECOM",
-        motif: "bupt_dove"
+        logoUrl: "https://upload.wikimedia.org/wikipedia/zh/b/bb/Emblem_of_Beijing_University_of_Posts_and_Telecommunications.svg",
+        backupUrls: [
+          "https://thumb.wikimedia.org/wikipedia/zh/thumb/b/bb/Emblem_of_Beijing_University_of_Posts_and_Telecommunications.svg/512px-Emblem_of_Beijing_University_of_Posts_and_Telecommunications.svg.png"
+        ]
       },
       {
         level: 2,
         name: "南方科技大学",
         short: "南科大",
-        en: "SUSTech",
         year: "2010",
-        motto: "明德求是 日新自强",
         radius: 24,
         score: 20,
         primary: "#ea580c",
-        secondary: "#9a3412",
         accent: "#2dd4bf",
-        ringText: "SOUTHERN UNIVERSITY OF SCIENCE & TECH",
-        motif: "sustech_torch"
+        logoUrl: "https://cdn.urongda.com/images/normal/medium/southern-university-of-science-and-technology-logo-1024px.png",
+        backupUrls: [
+          "https://upload.wikimedia.org/wikipedia/en/1/11/SUSTech_University_Logo.png"
+        ]
       },
       {
         level: 3,
         name: "上海科技大学",
         short: "上科大",
-        en: "ShanghaiTech",
         year: "2013",
-        motto: "立志 成才 报国 裕民",
         radius: 28,
         score: 36,
         primary: "#991b1b",
-        secondary: "#450a0a",
         accent: "#fca5a5",
-        ringText: "SHANGHAITECH UNIVERSITY · 2013",
-        motif: "shanghaitech_tower"
+        logoUrl: "https://thumb.wikimedia.org/wikipedia/zh/thumb/a/a8/ShanghaiTech_University_Emblem.svg/1280px-ShanghaiTech_University_Emblem.svg.png",
+        backupUrls: [
+          "https://upload.wikimedia.org/wikipedia/zh/a/a8/ShanghaiTech_University_Emblem.svg"
+        ]
       },
       {
         level: 4,
         name: "西湖大学",
         short: "西湖",
-        en: "Westlake",
         year: "2018",
-        motto: "高起点 小而精 研究型",
         radius: 32,
         score: 60,
-        primary: "#1e3a8a",
-        secondary: "#0f172a",
-        accent: "#38bdf8",
-        ringText: "WESTLAKE UNIVERSITY · HANGZHOU",
-        motif: "westlake_moon"
+        primary: "#003d79",
+        accent: "#f59e0b",
+        logoUrl: "https://upload.wikimedia.org/wikipedia/en/d/db/Westlake_University.png",
+        backupUrls: [
+          "https://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20190309/8496f11035f94607ac6bdbd62be8afa4.jpeg"
+        ]
       },
       {
         level: 5,
         name: "中国人民大学",
         short: "人大",
-        en: "RUC",
         year: "1937",
-        motto: "实事求是",
         radius: 37,
         score: 96,
         primary: "#9f1239",
-        secondary: "#4c0519",
         accent: "#fde047",
-        ringText: "RENMIN UNIVERSITY OF CHINA · 1937",
-        motif: "ruc_triple_ren"
+        logoUrl: "https://upload.wikimedia.org/wikipedia/zh/1/11/Renmin_University_of_China_logo.svg",
+        backupUrls: [
+          "https://thumb.wikimedia.org/wikipedia/zh/thumb/1/11/Renmin_University_of_China_logo.svg/512px-Renmin_University_of_China_logo.svg.png"
+        ]
       },
       {
         level: 6,
         name: "南京大学",
         short: "南大",
-        en: "NJU",
         year: "1902",
-        motto: "诚朴雄伟 励学敦行",
         radius: 42,
         score: 145,
-        primary: "#581c87",
-        secondary: "#3b0764",
+        primary: "#63065f",
         accent: "#fde047",
-        ringText: "NANJING UNIVERSITY · 1902",
-        motif: "nju_cedar_shield"
+        logoUrl: "https://cdn.worldvectorlogo.com/logos/nanjing-university.svg",
+        backupUrls: [
+          "https://innovation-entrepreneurship.nju.edu.cn/_upload/article/images/b9/1e/f35c5870438e88791d2a7065de3d/ea52e060-9520-481e-a1d0-8b9d563978e4.gif"
+        ]
       },
       {
         level: 7,
         name: "中国科学院大学",
         short: "国科大",
-        en: "UCAS",
         year: "1978",
-        motto: "博学笃志 格物明德",
         radius: 47,
         score: 215,
-        primary: "#0369a1",
-        secondary: "#082f49",
+        primary: "#003f88",
         accent: "#7dd3fc",
-        ringText: "UNIVERSITY OF CHINESE ACADEMY OF SCIENCES",
-        motif: "ucas_atom"
+        logoUrl: "https://upload.wikimedia.org/wikipedia/commons/d/de/Seal_of_the_Chinese_Academy_of_Sciences.png",
+        backupUrls: [
+          "https://www.urongda.com/og-images/university-of-chinese-academy-of-sciences.png"
+        ]
       },
       {
         level: 8,
         name: "上海交通大学",
         short: "上交",
-        en: "SJTU",
         year: "1896",
-        motto: "饮水思源 爱国荣校",
         radius: 53,
         score: 310,
         primary: "#991b1b",
-        secondary: "#450a0a",
         accent: "#facc15",
-        ringText: "SHANGHAI JIAO TONG UNIVERSITY · 1896",
-        motif: "sjtu_gear_anvil"
+        logoUrl: "https://thumb.wikimedia.org/wikipedia/zh/thumb/d/d5/SJTU_emblem.svg/1280px-SJTU_emblem.svg.png",
+        backupUrls: [
+          "https://upload.wikimedia.org/wikipedia/zh/d/d5/SJTU_emblem.svg"
+        ]
       },
       {
         level: 9,
         name: "清华大学",
         short: "清华",
-        en: "Tsinghua",
         year: "1911",
-        motto: "自强不息 厚德载物",
         radius: 59,
         score: 450,
-        primary: "#6b21a8",
-        secondary: "#2e1065",
+        primary: "#660874",
         accent: "#e9d5ff",
-        ringText: "TSINGHUA UNIVERSITY ·自强不息 厚德载物",
-        motif: "tsinghua_seal"
+        logoUrl: "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/Tsinghua_University_Logo.svg/512px-Tsinghua_University_Logo.svg.png",
+        backupUrls: [
+          "https://upload.wikimedia.org/wikipedia/commons/e/ec/Tsinghua_University_Logo.svg",
+          "https://vi.tsinghua.edu.cn/__local/8/1C/21/2F02A66E31BF084FE340463BB47_B9A95F73_185BC.jpg"
+        ]
       },
       {
         level: 10,
         name: "北京大学",
         short: "北大",
-        en: "PKU",
         year: "1898",
-        motto: "思想自由 兼容并包",
         radius: 66,
         score: 640,
-        primary: "#881337",
-        secondary: "#4c0519",
-        accent: "#fff1f2",
-        ringText: "PEKING UNIVERSITY · 1898",
-        motif: "pku_seal"
+        primary: "#94070a",
+        accent: "#ffe4e6",
+        logoUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f4/Peking_University_seal.svg",
+        backupUrls: [
+          "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Peking_University_seal.svg/512px-Peking_University_seal.svg.png"
+        ]
       },
       {
         level: 11,
         name: "东京大学",
         short: "东大",
-        en: "UTokyo",
         year: "1877",
-        motto: "Discover Excellence",
         radius: 73,
         score: 900,
-        primary: "#0369a1",
-        secondary: "#0c4a6e",
+        primary: "#0284c7",
         accent: "#facc15",
-        ringText: "THE UNIVERSITY OF TOKYO · 1877",
-        motif: "utokyo_ginkgo"
+        logoUrl: "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/University_of_Tokyo_symbol.svg/512px-University_of_Tokyo_symbol.svg.png",
+        backupUrls: [
+          "https://www.u-tokyo.ac.jp/content/400235961.png"
+        ]
       },
       {
         level: 12,
         name: "MIT",
         short: "MIT",
-        en: "MIT",
         year: "1861",
-        motto: "Mens et Manus",
         radius: 81,
         score: 1280,
-        primary: "#991b1b",
-        secondary: "#334155",
-        accent: "#e2e8f0",
-        ringText: "MASSACHUSETTS INSTITUTE OF TECHNOLOGY · 1861",
-        motif: "mit_shield"
+        primary: "#a31f34",
+        accent: "#cbd5e1",
+        logoUrl: "https://thumb.wikimedia.org/wikipedia/en/thumb/4/44/MIT_Seal.svg/1280px-MIT_Seal.svg.png",
+        backupUrls: [
+          "https://brand.mit.edu/sites/default/files/styles/1200w/public/2023-09/seal.png?itok=kRuULCZy"
+        ]
       },
       {
         level: 13,
         name: "巴黎高师",
         short: "巴黎高师",
-        en: "ENS PSL",
         year: "1794",
-        motto: "École Normale Supérieure",
         radius: 90,
         score: 1850,
         primary: "#1e3a8a",
-        secondary: "#0f172a",
         accent: "#fbbf24",
-        ringText: "ÉCOLE NORMALE SUPÉRIEURE · PARIS · 1794",
-        motif: "ens_laurel"
+        logoUrl: "https://upload.wikimedia.org/wikipedia/commons/7/74/Logo_%C3%89cole_normale_sup%C3%A9rieure_-_PSL_%28ENS-PSL%29.svg",
+        backupUrls: [
+          "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/Logo_%C3%89cole_normale_sup%C3%A9rieure_-_PSL_%28ENS-PSL%29.svg/512px-Logo_%C3%89cole_normale_sup%C3%A9rieure_-_PSL_%28ENS-PSL%29.svg.png"
+        ]
       },
       {
         level: 14,
         name: "普林斯顿大学",
         short: "普林斯顿",
-        en: "Princeton",
         year: "1746",
-        motto: "Dei Sub Numine Viget",
         radius: 100,
         score: 3000,
         primary: "#ea580c",
-        secondary: "#090d16",
-        accent: "#ffedd5",
-        ringText: "PRINCETON UNIVERSITY · DEI SVB NVMINE VIGET",
-        motif: "princeton_shield"
+        accent: "#fde047",
+        logoUrl: "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Princeton_seal.svg/330px-Princeton_seal.svg.png",
+        backupUrls: [
+          "https://upload.wikimedia.org/wikipedia/commons/d/d0/Princeton_seal.svg"
+        ]
       }
     ];
 
     /* ============================================================================
-       高分辨率校徽离屏矢量渲染引擎 (256×256 Offscreen Canvas)
+       网络校徽图片异步加载与圆形徽章离屏缓存 (256×256)
+       加载成功后自动将真实网络校徽居中裁剪/缩放进纯白底色圆盘 + 校色外框
        ============================================================================ */
     const emblemSprites = [];
+    const loadedImageElements = new Array(UNIVERSITIES.length).fill(null);
 
-    function drawCircularText(ctx, text, radius, startAngle, color, fontSize, weight = "700") {
-      ctx.save();
-      ctx.fillStyle = color;
-      ctx.font = `${weight} ${fontSize}px "Inter", "Noto Serif SC", sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const chars = text.split("");
-      const step = (Math.PI * 1.52) / Math.max(chars.length, 1);
-      const offset = startAngle - ((chars.length - 1) * step) / 2;
-      for (let i = 0; i < chars.length; i++) {
-        const angle = offset + i * step;
-        ctx.save();
-        ctx.rotate(angle);
-        ctx.translate(0, -radius);
-        ctx.fillText(chars[i], 0, 0);
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-
-    function drawGearTeeth(ctx, rInner, rOuter, teeth, color) {
-      ctx.save();
-      ctx.fillStyle = color;
-      for (let i = 0; i < teeth; i++) {
-        const a = (i / teeth) * Math.PI * 2;
-        ctx.save();
-        ctx.rotate(a);
-        ctx.beginPath();
-        ctx.moveTo(-4, -rInner);
-        ctx.lineTo(-3, -rOuter);
-        ctx.lineTo(3, -rOuter);
-        ctx.lineTo(4, -rInner);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
-      ctx.restore();
-    }
-
-    function drawUniversityMotif(ctx, uni) {
-      ctx.save();
-      const acc = uni.accent;
-      const pri = uni.primary;
-      const sec = uni.secondary;
-
-      switch (uni.motif) {
-        case "sufe_coin": {
-          // 上海财经大学：先秦布币 + 展开书卷 + 1917
-          ctx.strokeStyle = acc;
-          ctx.fillStyle = acc;
-          ctx.lineWidth = 4;
-          // 展开书卷底座
-          ctx.beginPath();
-          ctx.moveTo(-36, 26);
-          ctx.quadraticCurveTo(-18, 18, 0, 26);
-          ctx.quadraticCurveTo(18, 18, 36, 26);
-          ctx.lineTo(36, 36);
-          ctx.quadraticCurveTo(18, 28, 0, 36);
-          ctx.quadraticCurveTo(-18, 28, -36, 36);
-          ctx.closePath();
-          ctx.fill();
-          // 古布币（铲形币）
-          ctx.beginPath();
-          ctx.moveTo(-10, -38);
-          ctx.lineTo(10, -38);
-          ctx.lineTo(12, -20);
-          ctx.lineTo(24, -18);
-          ctx.lineTo(26, 16);
-          ctx.lineTo(12, 16);
-          ctx.lineTo(6, 2);
-          ctx.lineTo(-6, 2);
-          ctx.lineTo(-12, 16);
-          ctx.lineTo(-26, 16);
-          ctx.lineTo(-24, -18);
-          ctx.lineTo(-12, -20);
-          ctx.closePath();
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(0, -29, 3.5, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        }
-        case "bupt_dove": {
-          // 北京邮电大学：鸿雁传书飞鸽 + 经纬地球波纹
-          ctx.strokeStyle = "rgba(147, 197, 253, 0.45)";
-          ctx.lineWidth = 2.5;
-          ctx.beginPath();
-          ctx.arc(0, 2, 36, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.ellipse(0, 2, 36, 15, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.ellipse(0, 2, 16, 36, 0, 0, Math.PI * 2);
-          ctx.stroke();
-          // 银白通信鸿雁
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.moveTo(-34, 10);
-          ctx.quadraticCurveTo(-10, -18, 32, -22);
-          ctx.quadraticCurveTo(8, -2, 14, 18);
-          ctx.quadraticCurveTo(-4, 4, -34, 10);
-          ctx.closePath();
-          ctx.fill();
-          ctx.beginPath();
-          ctx.moveTo(-12, -6);
-          ctx.quadraticCurveTo(-24, -28, -4, -34);
-          ctx.quadraticCurveTo(4, -16, -12, -6);
-          ctx.fill();
-          break;
-        }
-        case "sustech_torch": {
-          // 南方科技大学：鹏城火炬流焰
-          const grad = ctx.createLinearGradient(0, 34, 0, -40);
-          grad.addColorStop(0, "#0d9488");
-          grad.addColorStop(0.45, "#fb923c");
-          grad.addColorStop(1, "#fef08a");
-          ctx.fillStyle = grad;
-          ctx.beginPath();
-          ctx.moveTo(-6, 36);
-          ctx.quadraticCurveTo(-24, 6, -12, -16);
-          ctx.quadraticCurveTo(0, -34, 18, -42);
-          ctx.quadraticCurveTo(6, -14, 18, 2);
-          ctx.quadraticCurveTo(28, -10, 26, -26);
-          ctx.quadraticCurveTo(36, -4, 12, 22);
-          ctx.quadraticCurveTo(2, 32, -6, 36);
-          ctx.closePath();
-          ctx.fill();
-          break;
-        }
-        case "shanghaitech_tower": {
-          // 上海科技大学：齿轮花瓣 + 科教塔尖
-          drawGearTeeth(ctx, 32, 40, 12, acc);
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, 32, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.fillStyle = "#ffffff";
-          ctx.beginPath();
-          ctx.moveTo(0, -28);
-          ctx.lineTo(14, 20);
-          ctx.lineTo(6, 20);
-          ctx.lineTo(0, -4);
-          ctx.lineTo(-6, 20);
-          ctx.lineTo(-14, 20);
-          ctx.closePath();
-          ctx.fill();
-          break;
-        }
-        case "westlake_moon": {
-          // 西湖大学：三潭印月石塔 + 西湖涟漪与分子轨道
-          ctx.strokeStyle = acc;
-          ctx.lineWidth = 3;
-          // 水波纹
-          for (let i = 0; i < 3; i++) {
-            ctx.beginPath();
-            ctx.arc(0, 20 + i * 7, 26 - i * 6, 0.15 * Math.PI, 0.85 * Math.PI);
-            ctx.stroke();
-          }
-          // 三潭印月宝塔葫芦顶
-          ctx.fillStyle = "#fcd34d";
-          ctx.beginPath();
-          ctx.moveTo(0, -38);
-          ctx.lineTo(6, -24);
-          ctx.lineTo(18, -20);
-          ctx.lineTo(10, -12);
-          ctx.arc(0, 0, 14, -0.3 * Math.PI, 1.3 * Math.PI, false);
-          ctx.lineTo(-10, -12);
-          ctx.lineTo(-18, -20);
-          ctx.lineTo(-6, -24);
-          ctx.closePath();
-          ctx.fill();
-          ctx.fillStyle = pri;
-          ctx.beginPath();
-          ctx.arc(0, 0, 5, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        }
-        case "ruc_triple_ren": {
-          // 中国人民大学：三个并列篆书“人”字（人民、人本、人文）
-          ctx.strokeStyle = acc;
-          ctx.lineWidth = 6.5;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          const drawSealRen = (ox, oy, sc) => {
-            ctx.save();
-            ctx.translate(ox, oy);
-            ctx.scale(sc, sc);
-            ctx.beginPath();
-            ctx.moveTo(0, -22);
-            ctx.lineTo(0, -4);
-            ctx.quadraticCurveTo(0, 12, -16, 22);
-            ctx.moveTo(0, -2);
-            ctx.quadraticCurveTo(2, 12, 16, 22);
-            ctx.stroke();
-            ctx.restore();
-          };
-          drawSealRen(0, -14, 0.82);
-          drawSealRen(-19, 10, 0.82);
-          drawSealRen(19, 10, 0.82);
-          break;
-        }
-        case "nju_cedar_shield": {
-          // 南京大学：紫金盾牌 + 雪松 + 1902
-          ctx.fillStyle = "rgba(255,255,255,0.14)";
-          ctx.strokeStyle = acc;
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.moveTo(-28, -30);
-          ctx.lineTo(28, -30);
-          ctx.lineTo(28, 2);
-          ctx.quadraticCurveTo(28, 28, 0, 38);
-          ctx.quadraticCurveTo(-28, 28, -28, 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          // 中央大雪松
-          ctx.fillStyle = "#4ade80";
-          const tiers = [[-16, -6, 0, -24], [-22, 6, 0, -14], [-26, 18, 0, -2]];
-          for (const [w, yBottom, cx, yTop] of tiers) {
-            ctx.beginPath();
-            ctx.moveTo(cx, yTop);
-            ctx.lineTo(-w, yBottom);
-            ctx.lineTo(w, yBottom);
-            ctx.closePath();
-            ctx.fill();
-          }
-          ctx.fillStyle = acc;
-          ctx.fillRect(-3.5, 18, 7, 10);
-          break;
-        }
-        case "ucas_atom": {
-          // 中国科学院大学：中科院六齿齿轮 + 交叉电子云轨道
-          drawGearTeeth(ctx, 34, 42, 12, "#ffffff");
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 3;
-          for (let a = 0; a < 3; a++) {
-            ctx.save();
-            ctx.rotate((a * Math.PI) / 3);
-            ctx.beginPath();
-            ctx.ellipse(0, 0, 32, 12, 0, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
-          }
-          ctx.fillStyle = "#fde047";
-          ctx.beginPath();
-          ctx.arc(0, 0, 7, 0, Math.PI * 2);
-          ctx.fill();
-          break;
-        }
-        case "sjtu_gear_anvil": {
-          // 上海交通大学：24齿铁轮 + 铁砧铁锤 + 展开典籍 + 饮水思源
-          drawGearTeeth(ctx, 35, 44, 24, acc);
-          ctx.strokeStyle = acc;
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.arc(0, 0, 35, 0, Math.PI * 2);
-          ctx.stroke();
-          // 铁砧
-          ctx.fillStyle = acc;
-          ctx.beginPath();
-          ctx.moveTo(-22, -6);
-          ctx.lineTo(24, -6);
-          ctx.lineTo(14, 4);
-          ctx.lineTo(18, 16);
-          ctx.lineTo(-18, 16);
-          ctx.lineTo(-12, 4);
-          ctx.closePath();
-          ctx.fill();
-          // 交叉锤柄与书卷
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.moveTo(-14, -22);
-          ctx.lineTo(14, 22);
-          ctx.moveTo(14, -22);
-          ctx.lineTo(-14, 22);
-          ctx.stroke();
-          break;
-        }
-        case "tsinghua_seal": {
-          // 清华大学：同心紫金双环 + 八角星徽 + 自强不息厚德载物
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 3.5;
-          ctx.beginPath();
-          ctx.arc(0, 0, 38, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(0, 0, 24, 0, Math.PI * 2);
-          ctx.stroke();
-          for (let i = 0; i < 8; i++) {
-            const a = (i * Math.PI) / 4;
-            ctx.beginPath();
-            ctx.moveTo(Math.cos(a) * 24, Math.sin(a) * 24);
-            ctx.lineTo(Math.cos(a) * 38, Math.sin(a) * 38);
-            ctx.stroke();
-          }
-          ctx.fillStyle = "#ffffff";
-          ctx.font = '700 20px "Noto Serif SC", serif';
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText("清華", 0, 1);
-          break;
-        }
-        case "pku_seal": {
-          // 北京大学：鲁迅设计篆书“北大”瓦当纹章
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.arc(0, 0, 38, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.lineWidth = 6.5;
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
-          // 上部篆书“北”（背对背二人）
-          ctx.beginPath();
-          ctx.moveTo(-8, -26);
-          ctx.lineTo(-8, -6);
-          ctx.moveTo(-8, -16);
-          ctx.lineTo(-22, -10);
-          ctx.moveTo(8, -26);
-          ctx.lineTo(8, -6);
-          ctx.moveTo(8, -16);
-          ctx.lineTo(22, -10);
-          // 下部篆书“大”（正面舒展人形）
-          ctx.moveTo(-24, 6);
-          ctx.quadraticCurveTo(0, 2, 24, 6);
-          ctx.moveTo(0, -2);
-          ctx.quadraticCurveTo(-2, 16, -20, 28);
-          ctx.moveTo(0, 6);
-          ctx.quadraticCurveTo(4, 18, 20, 28);
-          ctx.stroke();
-          break;
-        }
-        case "utokyo_ginkgo": {
-          // 东京大学：金黄与淡青交叠的双银杏叶（イチョウ・バッジ）
-          const drawFanLeaf = (rot, fill, stroke) => {
-            ctx.save();
-            ctx.rotate(rot);
-            ctx.fillStyle = fill;
-            ctx.strokeStyle = stroke;
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(0, 26);
-            ctx.lineTo(0, 8);
-            ctx.quadraticCurveTo(-30, -4, -26, -24);
-            ctx.quadraticCurveTo(-12, -34, -3, -18);
-            ctx.lineTo(0, -10);
-            ctx.lineTo(3, -18);
-            ctx.quadraticCurveTo(12, -34, 26, -24);
-            ctx.quadraticCurveTo(30, -4, 0, 8);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            ctx.restore();
-          };
-          drawFanLeaf(0.45, "#38bdf8", "#ffffff");
-          drawFanLeaf(-0.35, "#facc15", "#fef08a");
-          break;
-        }
-        case "mit_shield": {
-          // MIT 麻省理工学院：Cardinal Red & Steel Gray 学院盾 + 科学火炬 + Mens et Manus
-          ctx.fillStyle = "#e2e8f0";
-          ctx.strokeStyle = "#991b1b";
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.moveTo(-30, -32);
-          ctx.lineTo(30, -32);
-          ctx.lineTo(30, 2);
-          ctx.quadraticCurveTo(30, 28, 0, 38);
-          ctx.quadraticCurveTo(-30, 28, -30, 2);
-          ctx.closePath();
-          ctx.fill();
-          ctx.stroke();
-          // 顶部 Cardinal Red 盾首
-          ctx.fillStyle = "#991b1b";
-          ctx.fillRect(-28, -30, 56, 16);
-          // 经典几何 MIT 柱体字样
-          ctx.fillStyle = "#0f172a";
-          ctx.fillRect(-20, -6, 6, 24);
-          ctx.fillRect(-12, -6, 6, 14);
-          ctx.fillRect(-4, -6, 6, 24);
-          ctx.fillStyle = "#991b1b";
-          ctx.fillRect(5, -6, 6, 6);
-          ctx.fillRect(5, 3, 6, 15);
-          ctx.fillStyle = "#0f172a";
-          ctx.fillRect(14, -6, 10, 6);
-          ctx.fillRect(14, 2, 6, 16);
-          break;
-        }
-        case "ens_laurel": {
-          // 巴黎高师 ENS (1794)：法兰西金桂冠 + 交织花体 ENS 徽章
-          ctx.strokeStyle = "#fbbf24";
-          ctx.lineWidth = 3.5;
-          // 左右橄榄桂冠枝条
-          for (const dir of [-1, 1]) {
-            ctx.save();
-            ctx.scale(dir, 1);
-            ctx.beginPath();
-            ctx.arc(0, 0, 34, 0.2 * Math.PI, 0.82 * Math.PI);
-            ctx.stroke();
-            for (let k = 0; k < 5; k++) {
-              const ang = 0.25 * Math.PI + k * 0.13 * Math.PI;
-              const lx = Math.cos(ang) * 34;
-              const ly = Math.sin(ang) * 34;
-              ctx.fillStyle = "#fbbf24";
-              ctx.beginPath();
-              ctx.ellipse(lx, ly, 6, 3, ang, 0, Math.PI * 2);
-              ctx.fill();
-            }
-            ctx.restore();
-          }
-          ctx.fillStyle = "#fde047";
-          ctx.font = '800 28px "Noto Serif SC", Georgia, serif';
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.fillText("ENS", 0, -2);
-          ctx.font = '700 11px "JetBrains Mono", monospace';
-          ctx.fillStyle = "#ffffff";
-          ctx.fillText("PARIS · 1794", 0, 19);
-          break;
-        }
-        case "princeton_shield": {
-          // 普林斯顿大学 (1746)：黑橙哥特盾牌 + 橙色 V 字折梁 + 展开圣经 VET NOV TESTAMENTVM
-          ctx.save();
-          ctx.beginPath();
-          ctx.moveTo(-34, -34);
-          ctx.lineTo(34, -34);
-          ctx.lineTo(34, 2);
-          ctx.quadraticCurveTo(34, 30, 0, 42);
-          ctx.quadraticCurveTo(-34, 30, -34, 2);
-          ctx.closePath();
-          ctx.clip();
-
-          // 上半黑底、下半橙底
-          ctx.fillStyle = "#0f172a";
-          ctx.fillRect(-36, -36, 72, 46);
-          ctx.fillStyle = "#f97316";
-          ctx.fillRect(-36, 10, 72, 36);
-
-          // 橙色哥特 Chevron 折梁
-          ctx.strokeStyle = "#f97316";
-          ctx.lineWidth = 10;
-          ctx.beginPath();
-          ctx.moveTo(-36, 16);
-          ctx.lineTo(0, -4);
-          ctx.lineTo(36, 16);
-          ctx.stroke();
-
-          // 上方展开白色书卷 (VET NOV TESTAMENTVM)
-          ctx.fillStyle = "#ffffff";
-          ctx.strokeStyle = "#fbbf24";
-          ctx.lineWidth = 2;
-          ctx.fillRect(-18, -27, 17, 18);
-          ctx.fillRect(1, -27, 17, 18);
-          ctx.strokeRect(-18, -27, 17, 18);
-          ctx.strokeRect(1, -27, 17, 18);
-          ctx.fillStyle = "#0f172a";
-          ctx.font = '800 6px "JetBrains Mono", monospace';
-          ctx.textAlign = "center";
-          ctx.fillText("VET", -9.5, -19);
-          ctx.fillText("NOV", 9.5, -19);
-          ctx.fillText("TEST", -9.5, -12);
-          ctx.fillText("AMEN", 9.5, -12);
-          ctx.restore();
-
-          // 盾牌金框
-          ctx.strokeStyle = "#fde047";
-          ctx.lineWidth = 4.5;
-          ctx.beginPath();
-          ctx.moveTo(-34, -34);
-          ctx.lineTo(34, -34);
-          ctx.lineTo(34, 2);
-          ctx.quadraticCurveTo(34, 30, 0, 42);
-          ctx.quadraticCurveTo(-34, 30, -34, 2);
-          ctx.closePath();
-          ctx.stroke();
-          break;
-        }
-      }
-      ctx.restore();
-    }
-
-    function buildUniversitySprite(uni) {
+    function renderUniversityTokenCanvas(idx, imgEl) {
+      const uni = UNIVERSITIES[idx];
       const size = 256;
-      const off = document.createElement("canvas");
+      const off = emblemSprites[idx] || document.createElement("canvas");
       off.width = size;
       off.height = size;
-      const ctx = off.getContext("2d");
+      const c = off.getContext("2d");
       const cx = size / 2;
       const cy = size / 2;
-      const R = 120;
+      const R = 122;
 
-      ctx.save();
-      ctx.translate(cx, cy);
+      c.clearRect(0, 0, size, size);
+      c.save();
+      c.translate(cx, cy);
 
-      // 1. 外圈金属质感底座渐变
-      const baseGrad = ctx.createRadialGradient(-32, -38, 12, 0, 0, R);
-      baseGrad.addColorStop(0, uni.primary);
-      baseGrad.addColorStop(0.72, uni.primary);
-      baseGrad.addColorStop(1, uni.secondary);
+      // 1. 纯白圆盘底托（使得透明底或白底的网络校徽均清晰醒目）
+      c.beginPath();
+      c.arc(0, 0, R, 0, Math.PI * 2);
+      c.fillStyle = "#ffffff";
+      c.fill();
 
-      ctx.beginPath();
-      ctx.arc(0, 0, R, 0, Math.PI * 2);
-      ctx.fillStyle = baseGrad;
-      ctx.fill();
+      // 2. 绘制网络校徽图像（自动按宽高比内切适配圆形区域）
+      if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
+        c.save();
+        c.beginPath();
+        c.arc(0, 0, R - 8, 0, Math.PI * 2);
+        c.clip();
 
-      // 2. 校徽外环双金边与刻度装饰
-      ctx.lineWidth = 7;
-      ctx.strokeStyle = uni.accent;
-      ctx.stroke();
+        const iw = imgEl.naturalWidth;
+        const ih = imgEl.naturalHeight;
+        const aspect = iw / ih;
+        // 针对圆形校徽填满圆盘，针对长方形校徽（如巴黎高师、东大横版）按最大边留白内切
+        const targetBox = (aspect > 1.25 || aspect < 0.8) ? (R - 18) * 1.85 : (R - 10) * 1.96;
+        let dw = targetBox;
+        let dh = targetBox;
+        if (aspect > 1) {
+          dh = targetBox / aspect;
+        } else {
+          dw = targetBox * aspect;
+        }
+        c.drawImage(imgEl, -dw / 2, -dh / 2, dw, dh);
+        c.restore();
+      } else {
+        // 图片仍在网络请求时的占位文字
+        c.fillStyle = uni.primary;
+        c.font = '800 38px "Inter", "PingFang SC", sans-serif';
+        c.textAlign = "center";
+        c.textBaseline = "middle";
+        c.fillText(uni.short, 0, -4);
+      }
 
-      ctx.beginPath();
-      ctx.arc(0, 0, R - 11, 0, Math.PI * 2);
-      ctx.lineWidth = 2.2;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
-      ctx.stroke();
+      // 3. 高校代表色金属质感双层边框
+      c.beginPath();
+      c.arc(0, 0, R - 3, 0, Math.PI * 2);
+      c.lineWidth = 7;
+      c.strokeStyle = uni.primary;
+      c.stroke();
 
-      // 3. 环形英文校名与建校年份铭文
-      drawCircularText(ctx, uni.ringText, R - 23, 0, "rgba(255,255,255,0.92)", 10.5, "700");
+      c.beginPath();
+      c.arc(0, 0, R - 8, 0, Math.PI * 2);
+      c.lineWidth = 2.2;
+      c.strokeStyle = uni.accent;
+      c.stroke();
 
-      // 4. 内核徽章圆盘
-      ctx.beginPath();
-      ctx.arc(0, 0, R - 36, 0, Math.PI * 2);
-      const innerGrad = ctx.createRadialGradient(-18, -22, 8, 0, 0, R - 36);
-      innerGrad.addColorStop(0, uni.secondary);
-      innerGrad.addColorStop(1, uni.primary);
-      ctx.fillStyle = innerGrad;
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = uni.accent;
-      ctx.stroke();
+      // 4. 底部简洁校名小胶囊标签（方便小尺寸球体快速识别等级与学校）
+      const pillW = 136;
+      const pillH = 34;
+      const pillY = R - 38;
+      c.fillStyle = "rgba(15, 23, 42, 0.82)";
+      c.strokeStyle = uni.accent;
+      c.lineWidth = 2;
+      c.beginPath();
+      c.roundRect(-pillW / 2, pillY, pillW, pillH, 17);
+      c.fill();
+      c.stroke();
 
-      // 5. 各高校专属核心图腾
-      ctx.save();
-      ctx.translate(0, -10);
-      drawUniversityMotif(ctx, uni);
-      ctx.restore();
+      c.fillStyle = "#ffffff";
+      c.font = '800 20px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.fillText(uni.short, 0, pillY + pillH / 2 + 1);
 
-      // 6. 底部高对比度校名绶带铭牌（保证小尺寸球体也一眼看清校名）
-      ctx.save();
-      ctx.fillStyle = "rgba(15, 23, 42, 0.86)";
-      ctx.strokeStyle = uni.accent;
-      ctx.lineWidth = 3;
-      const pillW = 166;
-      const pillH = 44;
-      const pillX = -pillW / 2;
-      const pillY = 38;
-      ctx.beginPath();
-      ctx.roundRect(pillX, pillY, pillW, pillH, 22);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = '800 24px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif';
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(uni.short, 0, pillY + pillH / 2 + 1);
-      ctx.restore();
-
-      // 7. 顶部建校年份徽标
-      ctx.save();
-      ctx.fillStyle = uni.accent;
-      ctx.font = '800 13px "JetBrains Mono", monospace';
-      ctx.textAlign = "center";
-      ctx.fillText(`EST. ${uni.year}`, 0, -60);
-      ctx.restore();
-
-      // 8. 玻璃球面高光反射层
-      const gloss = ctx.createRadialGradient(-40, -52, 6, -30, -40, 88);
-      gloss.addColorStop(0, "rgba(255, 255, 255, 0.42)");
-      gloss.addColorStop(0.5, "rgba(255, 255, 255, 0.10)");
-      gloss.addColorStop(1, "rgba(255, 255, 255, 0)");
-      ctx.fillStyle = gloss;
-      ctx.beginPath();
-      ctx.arc(0, 0, R - 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.restore();
+      c.restore();
+      emblemSprites[idx] = off;
       return off;
     }
 
-    function initAllUniversitySprites() {
-      for (let i = 0; i < UNIVERSITIES.length; i++) {
-        emblemSprites[i] = buildUniversitySprite(UNIVERSITIES[i]);
-      }
+    function loadUniversityNetworkImages() {
+      UNIVERSITIES.forEach((uni, idx) => {
+        // 先初始化基底圆盘
+        renderUniversityTokenCanvas(idx, null);
+
+        const candidateUrls = [uni.logoUrl, ...(uni.backupUrls || [])];
+        let attemptIndex = 0;
+
+        const tryLoadNextUrl = () => {
+          if (attemptIndex >= candidateUrls.length) return;
+          const url = candidateUrls[attemptIndex++];
+          const img = new Image();
+          img.referrerPolicy = "no-referrer";
+          img.onload = () => {
+            loadedImageElements[idx] = img;
+            renderUniversityTokenCanvas(idx, img);
+            // 同步更新右侧图鉴缩略图与下一枚预览图
+            const thumbImg = document.getElementById(`atlas-img-${idx}`);
+            if (thumbImg) thumbImg.src = url;
+            if (idx === nextDropLevel) {
+              const nextPreviewImg = document.getElementById("nextPreviewImg");
+              if (nextPreviewImg) nextPreviewImg.src = url;
+            }
+          };
+          img.onerror = () => {
+            tryLoadNextUrl();
+          };
+          img.src = url;
+        };
+
+        tryLoadNextUrl();
+      });
     }
 
     /* ============================================================================
@@ -1145,7 +590,6 @@
         this.ensureContext();
         if (!this.ctx) return;
         const now = this.ctx.currentTime;
-        // 15 阶五声与大调交响音阶爬升
         const scale = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99, 880.00, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00];
         const baseFreq = scale[Math.min(newLevel, scale.length - 1)] * (1 + (combo - 1) * 0.04);
 
@@ -1217,16 +661,14 @@
 
     const canvas = document.getElementById("suikaCanvas");
     const ctx = canvas.getContext("2d");
-    const nextPreviewCanvas = document.getElementById("nextPreviewCanvas");
-    const nextPreviewCtx = nextPreviewCanvas.getContext("2d");
 
-    const W = canvas.width;   // 460
-    const H = canvas.height;  // 404
+    const W = canvas.width;   // 440
+    const H = canvas.height;  // 384
     const WALL_LEFT = 14;
     const WALL_RIGHT = W - 14;
     const FLOOR_Y = H - 12;
-    const DEADLINE_Y = 66;
-    const DROP_Y = 36;
+    const DEADLINE_Y = 64;
+    const DROP_Y = 34;
 
     let balls = [];
     let particles = [];
@@ -1245,7 +687,6 @@
     let nextDropLevel = 1;
     let pointerX = W / 2;
     let dropCooldown = 0;
-    let isWaitingDropLanding = false;
     let comboChainCount = 0;
     let comboResetTimer = 0;
     let jostleCharges = 3;
@@ -1260,10 +701,12 @@
     const topUniEl = document.getElementById("topUniEl");
     const maxComboEl = document.getElementById("maxComboEl");
     const nextUniNameEl = document.getElementById("nextUniNameEl");
+    const nextPreviewImg = document.getElementById("nextPreviewImg");
     const unlockedCountEl = document.getElementById("unlockedCountEl");
     const uniAtlasGrid = document.getElementById("uniAtlasGrid");
     const jostleBoxBtn = document.getElementById("jostleBoxBtn");
-    const gameOverModal = document.getElementById("gameOverModal");
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const gameOverSummary = document.getElementById("gameOverSummary");
 
     function buildAtlasDOM() {
       uniAtlasGrid.innerHTML = "";
@@ -1271,13 +714,23 @@
         const chip = document.createElement("div");
         chip.className = "uni-atlas-chip" + (unlockedMask.has(idx) ? " unlocked" : "") + (idx === highestLevelReached ? " current-max" : "");
         chip.id = `atlas-chip-${idx}`;
-        chip.title = `Lv.${idx + 1} ${uni.name} (${uni.year}) · ${uni.motto}`;
+        chip.title = `Lv.${idx + 1} ${uni.name} (${uni.year})`;
 
-        const miniCanvas = document.createElement("canvas");
-        miniCanvas.width = 64;
-        miniCanvas.height = 64;
-        const mCtx = miniCanvas.getContext("2d");
-        mCtx.drawImage(emblemSprites[idx], 0, 0, 64, 64);
+        const thumbWrap = document.createElement("div");
+        thumbWrap.className = "uni-atlas-thumb";
+
+        const img = document.createElement("img");
+        img.id = `atlas-img-${idx}`;
+        img.src = uni.logoUrl;
+        img.alt = uni.name;
+        img.referrerPolicy = "no-referrer";
+        let fallbackIdx = 0;
+        img.onerror = () => {
+          if (uni.backupUrls && fallbackIdx < uni.backupUrls.length) {
+            img.src = uni.backupUrls[fallbackIdx++];
+          }
+        };
+        thumbWrap.appendChild(img);
 
         const nameSpan = document.createElement("div");
         nameSpan.className = "uni-atlas-name";
@@ -1287,7 +740,7 @@
         lvSpan.className = "uni-atlas-lv";
         lvSpan.textContent = `Lv.${idx + 1}`;
 
-        chip.appendChild(miniCanvas);
+        chip.appendChild(thumbWrap);
         chip.appendChild(nameSpan);
         chip.appendChild(lvSpan);
         uniAtlasGrid.appendChild(chip);
@@ -1307,25 +760,35 @@
     function updateNextPreviewUI() {
       const nextUni = UNIVERSITIES[nextDropLevel];
       nextUniNameEl.textContent = `Lv.${nextDropLevel + 1} ${nextUni.name}`;
-      nextPreviewCtx.clearRect(0, 0, 44, 44);
-      nextPreviewCtx.drawImage(emblemSprites[nextDropLevel], 0, 0, 44, 44);
+      if (nextPreviewImg) {
+        const loaded = loadedImageElements[nextDropLevel];
+        nextPreviewImg.src = loaded ? loaded.src : nextUni.logoUrl;
+      }
     }
 
-    function updateHUD() {
+    function bumpHudElement(el) {
+      if (!el) return;
+      el.classList.remove("is-bumping");
+      void el.offsetWidth;
+      el.classList.add("is-bumping");
+    }
+
+    function updateHUD(animateScore = false) {
       currentScoreEl.textContent = currentScore.toLocaleString();
+      if (animateScore) bumpHudElement(currentScoreEl);
       if (currentScore > bestScore) {
         bestScore = saveBestScore(currentScore);
+        bumpHudElement(bestScoreEl);
       }
       bestScoreEl.textContent = bestScore.toLocaleString();
       const topUni = UNIVERSITIES[highestLevelReached];
       topUniEl.textContent = `Lv.${highestLevelReached + 1} ${topUni.short}`;
       maxComboEl.textContent = `×${maxComboRecord}`;
-      jostleBoxBtn.textContent = `🌪 摇盒助推 (${jostleCharges})`;
+      jostleBoxBtn.textContent = `🌪 摇盒 (${jostleCharges})`;
       jostleBoxBtn.disabled = jostleCharges <= 0 || isGameOver;
     }
 
     function rollRandomDropLevel() {
-      // 投掷池为前 5 阶高校（上财、北邮、南科大、上科大、西湖），权重递减
       const weights = [38, 28, 18, 11, 5];
       let r = Math.random() * 100;
       for (let i = 0; i < weights.length; i++) {
@@ -1342,7 +805,6 @@
 
     function spawnMergeEffects(x, y, newLevel, combo) {
       const uni = UNIVERSITIES[newLevel];
-      // 1. 双层冲击波光环
       shockwaves.push({
         x,
         y,
@@ -1354,7 +816,6 @@
         lineWidth: 4.5 + Math.min(newLevel * 0.35, 4)
       });
 
-      // 2. 学术星芒与校色粒子爆发
       const count = 16 + newLevel * 3 + combo * 4;
       for (let i = 0; i < count; i++) {
         const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
@@ -1374,7 +835,6 @@
         });
       }
 
-      // 3. 浮动晋升横幅文字
       const comboTag = combo >= 2 ? ` · ${combo}连合!` : "";
       floatingTexts.push({
         x,
@@ -1382,13 +842,12 @@
         text: `🎓 ${uni.name}${comboTag}`,
         subText: `+${uni.score * combo}`,
         color: uni.accent,
-        stroke: uni.secondary,
+        stroke: "#0f172a",
         alpha: 1,
         vy: -1.35,
         scale: newLevel >= 9 ? 1.22 : 1.0
       });
 
-      // 4. 若合成 C9 / 世界名校（Lv.9 上交及以上），触发金箔庆典礼花
       if (newLevel >= 8) {
         screenShakeMag = Math.min(11, 3 + (newLevel - 7) * 1.4);
         for (let k = 0; k < 24; k++) {
@@ -1465,7 +924,6 @@
       let mergedPair = null;
 
       for (let step = 0; step < SUB_STEPS; step++) {
-        // 1. 速度与位置积分
         for (let i = 0; i < balls.length; i++) {
           const b = balls[i];
           b.vy += GRAVITY;
@@ -1475,7 +933,6 @@
           b.angle += b.vAngle / SUB_STEPS;
           b.vAngle *= 0.995;
 
-          // 左右器皿内壁碰撞
           if (b.x - b.radius < WALL_LEFT) {
             b.x = WALL_LEFT + b.radius;
             if (b.vx < 0) b.vx = -b.vx * RESTITUTION;
@@ -1484,7 +941,6 @@
             if (b.vx > 0) b.vx = -b.vx * RESTITUTION;
           }
 
-          // 底部培养皿底座碰撞
           if (b.y + b.radius > FLOOR_Y) {
             b.y = FLOOR_Y - b.radius;
             if (b.vy > 1.5 && step === 0) {
@@ -1499,7 +955,6 @@
           }
         }
 
-        // 2. 圆与圆刚体碰撞及同级合并检测
         for (let i = 0; i < balls.length; i++) {
           const a = balls[i];
           for (let j = i + 1; j < balls.length; j++) {
@@ -1513,7 +968,6 @@
               a.hasTouched = true;
               b.hasTouched = true;
 
-              // 检查是否相同等级且可继续合成（或双普林斯顿终极荣耀共鸣）
               if (a.level === b.level && !mergedPair) {
                 mergedPair = { idxA: i, idxB: j };
                 break;
@@ -1524,7 +978,6 @@
               const ny = dy / dist;
               const overlap = minDist - dist;
 
-              // 按质量反比分离重叠
               const totalMass = a.mass + b.mass;
               const ratioA = b.mass / totalMass;
               const ratioB = a.mass / totalMass;
@@ -1534,7 +987,6 @@
               b.x += nx * overlap * ratioB;
               b.y += ny * overlap * ratioB;
 
-              // 冲量动量交换
               const rvx = b.vx - a.vx;
               const rvy = b.vy - a.vy;
               const velAlongNormal = rvx * nx + rvy * ny;
@@ -1548,7 +1000,6 @@
                 b.vx += ix / b.mass;
                 b.vy += iy / b.mass;
 
-                // 切向滚动角速度传递
                 const tx = -ny;
                 const ty = nx;
                 const tangentVel = rvx * tx + rvy * ty;
@@ -1563,7 +1014,6 @@
         if (mergedPair) break;
       }
 
-      // 3. 处理本帧触发的名校合成
       if (mergedPair) {
         const a = balls[mergedPair.idxA];
         const b = balls[mergedPair.idxB];
@@ -1571,7 +1021,6 @@
         const my = (a.y + b.y) / 2;
         const currentLvl = a.level;
 
-        // 移除两个旧校徽
         balls.splice(mergedPair.idxB, 1);
         balls.splice(mergedPair.idxA, 1);
 
@@ -1585,7 +1034,6 @@
         const nextLvl = Math.min(UNIVERSITIES.length - 1, currentLvl + 1);
         const uni = UNIVERSITIES[nextLvl];
 
-        // 如果是两个 Lv.15 普林斯顿大学终极合成，奖励巨额荣誉分并保留一枚闪耀普林斯顿
         const gainedScore = uni.score * comboChainCount * (currentLvl === UNIVERSITIES.length - 1 ? 2 : 1);
         currentScore += gainedScore;
 
@@ -1597,7 +1045,6 @@
         }
         refreshAtlasStates();
 
-        // 生成晋升后的新高校球体（带 Q 弹形变与周围轻微推力波）
         const newR = uni.radius;
         const clampedX = Math.max(WALL_LEFT + newR, Math.min(WALL_RIGHT - newR, mx));
         const clampedY = Math.min(FLOOR_Y - newR, my);
@@ -1620,7 +1067,6 @@
           safeFrames: 25
         });
 
-        // 对周围球体施加柔和冲击推力，增强打击感
         for (const other of balls) {
           const dx = other.x - clampedX;
           const dy = other.y - clampedY;
@@ -1634,10 +1080,9 @@
 
         soundFX.playMerge(nextLvl, comboChainCount);
         spawnMergeEffects(clampedX, clampedY, nextLvl, comboChainCount);
-        updateHUD();
+        updateHUD(true);
       }
 
-      // 4. 弹性形变恢复与警戒线超时判定
       let anyOverDeadline = false;
       for (const b of balls) {
         b.scaleX += (1 - b.scaleX) * 0.22;
@@ -1659,7 +1104,6 @@
         deadlineOverTimer = Math.max(0, deadlineOverTimer - 2);
       }
 
-      // 5. 更新特效粒子与冲击波
       for (let i = shockwaves.length - 1; i >= 0; i--) {
         const sw = shockwaves[i];
         sw.r += (sw.maxR - sw.r) * 0.18;
@@ -1717,21 +1161,18 @@
       ctx.save();
       ctx.clearRect(0, 0, W, H);
 
-      // 屏幕震动偏移
       if (screenShakeMag > 0.2) {
         const sx = (Math.random() - 0.5) * screenShakeMag;
         const sy = (Math.random() - 0.5) * screenShakeMag;
         ctx.translate(sx, sy);
       }
 
-      // 1. 培养皿磨砂玻璃背景与刻度网格
       const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      bgGrad.addColorStop(0, "rgba(248, 250, 252, 0.80)");
-      bgGrad.addColorStop(1, "rgba(226, 232, 240, 0.90)");
+      bgGrad.addColorStop(0, "rgba(248, 250, 252, 0.78)");
+      bgGrad.addColorStop(1, "rgba(226, 232, 240, 0.88)");
       ctx.fillStyle = bgGrad;
       ctx.fillRect(0, 0, W, H);
 
-      //  subtle grid
       ctx.strokeStyle = "rgba(148, 163, 184, 0.14)";
       ctx.lineWidth = 1;
       for (let gx = WALL_LEFT + 40; gx < WALL_RIGHT; gx += 44) {
@@ -1747,7 +1188,6 @@
         ctx.stroke();
       }
 
-      // 2. 培养皿U型水晶容器边框
       ctx.strokeStyle = "rgba(37, 99, 235, 0.38)";
       ctx.lineWidth = 4;
       ctx.lineCap = "round";
@@ -1758,7 +1198,6 @@
       ctx.lineTo(WALL_RIGHT, DEADLINE_Y - 12);
       ctx.stroke();
 
-      // 3. 顶部警戒虚线
       const warnRatio = Math.min(1, deadlineOverTimer / 135);
       ctx.save();
       ctx.setLineDash([7, 6]);
@@ -1772,12 +1211,11 @@
       ctx.stroke();
       if (warnRatio > 0.1) {
         ctx.fillStyle = "#dc2626";
-        ctx.font = '700 11px "JetBrains Mono", sans-serif';
+        ctx.font = '700 11px "JetBrains Mono", monospace';
         ctx.fillText(`⚠ 培养皿即将溢出 ${(100 - warnRatio * 100).toFixed(0)}%`, WALL_LEFT + 12, DEADLINE_Y - 6);
       }
       ctx.restore();
 
-      // 4. 顶部待投掷校徽与垂直激光瞄准线
       if (!isGameOver && dropCooldown <= 4) {
         const previewUni = UNIVERSITIES[currentDropLevel];
         const dropX = clampDropX(pointerX, currentDropLevel);
@@ -1799,7 +1237,6 @@
         ctx.restore();
       }
 
-      // 5. 背景庆典礼花
       for (const c of backgroundConfetti) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, c.alpha);
@@ -1810,14 +1247,12 @@
         ctx.restore();
       }
 
-      // 6. 绘制所有物理校徽球体
       for (const b of balls) {
         const uni = UNIVERSITIES[b.level];
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.scale(b.scaleX, b.scaleY);
 
-        // 地面投影
         if (b.y + b.radius > FLOOR_Y - 10) {
           ctx.save();
           ctx.fillStyle = "rgba(15, 23, 42, 0.16)";
@@ -1827,7 +1262,6 @@
           ctx.restore();
         }
 
-        // 刚合成时的金色光晕外环
         if (b.glowAlpha > 0.02) {
           ctx.save();
           ctx.globalAlpha = b.glowAlpha;
@@ -1844,7 +1278,6 @@
         ctx.restore();
       }
 
-      // 7. 合成冲击波环
       for (const sw of shockwaves) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, sw.alpha);
@@ -1862,7 +1295,6 @@
         ctx.restore();
       }
 
-      // 8. 星芒与粒子
       for (const p of particles) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.alpha);
@@ -1877,7 +1309,6 @@
         ctx.restore();
       }
 
-      // 9. 浮动名校晋升横幅
       for (const ft of floatingTexts) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, ft.alpha);
@@ -1902,8 +1333,19 @@
     }
 
     /* ============================================================================
-       交互控制（鼠标全流程操控 + 摇盒助推技能）
+       交互控制与顶部按钮事件
        ============================================================================ */
+    function showToast(msg) {
+      const toast = document.getElementById("toastNotice");
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add("is-visible");
+      clearTimeout(window.__uniToastTimer);
+      window.__uniToastTimer = setTimeout(() => {
+        toast.classList.remove("is-visible");
+      }, 2200);
+    }
+
     function updatePointerFromEvent(e) {
       const rect = canvas.getBoundingClientRect();
       const scaleX = canvas.width / rect.width;
@@ -1950,15 +1392,6 @@
 
     jostleBoxBtn.addEventListener("click", triggerJostleSkill);
 
-    window.addEventListener("keydown", (e) => {
-      if (e.key === "r" || e.key === "R") {
-        triggerJostleSkill();
-      } else if (e.key === " ") {
-        e.preventDefault();
-        dropCurrentBall();
-      }
-    });
-
     function triggerGameOver() {
       isGameOver = true;
       if (currentScore > bestScore) {
@@ -1966,12 +1399,12 @@
       }
       updateHUD();
       const topUni = UNIVERSITIES[highestLevelReached];
-      document.getElementById("finalScoreEl").textContent = currentScore.toLocaleString();
-      document.getElementById("finalBestEl").textContent = bestScore.toLocaleString();
-      document.getElementById("finalUniEl").textContent = `Lv.${highestLevelReached + 1} ${topUni.short}`;
-      document.getElementById("finalMergesEl").textContent = String(totalMergeCount);
-      gameOverModal.classList.add("open");
-      gameOverModal.setAttribute("aria-hidden", "false");
+      if (gameOverSummary) {
+        gameOverSummary.textContent = `本局得分 ${currentScore.toLocaleString()} · 历史最高 ${bestScore.toLocaleString()} · 最高合成 Lv.${highestLevelReached + 1} ${topUni.name}（共合成 ${totalMergeCount} 次）`;
+      }
+      if (gameOverOverlay) {
+        gameOverOverlay.classList.add("is-visible");
+      }
     }
 
     function resetGame() {
@@ -1994,45 +1427,64 @@
       jostleCharges = 3;
       deadlineOverTimer = 0;
       isGameOver = false;
-      gameOverModal.classList.remove("open");
-      gameOverModal.setAttribute("aria-hidden", "true");
+      if (gameOverOverlay) {
+        gameOverOverlay.classList.remove("is-visible");
+      }
       refreshAtlasStates();
       updateNextPreviewUI();
       updateHUD();
     }
 
     document.getElementById("restartGameBtn").addEventListener("click", resetGame);
-    document.getElementById("modalRestartBtn").addEventListener("click", resetGame);
+    document.getElementById("overlayRestartBtn").addEventListener("click", resetGame);
 
-    const soundToggleBtn = document.getElementById("soundToggleBtn");
-    soundToggleBtn.addEventListener("click", () => {
+    const toggleSoundBtn = document.getElementById("toggleSoundBtn");
+    toggleSoundBtn.addEventListener("click", () => {
       soundFX.enabled = !soundFX.enabled;
-      soundToggleBtn.textContent = soundFX.enabled ? "🔊 音效" : "🔇 静音";
+      toggleSoundBtn.textContent = soundFX.enabled ? "🔊 音效" : "🔇 静音";
+    });
+
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "e" || e.key === "E") {
+        triggerJostleSkill();
+      } else if (e.key === "r" || e.key === "R") {
+        resetGame();
+      } else if (e.key === "m" || e.key === "M") {
+        toggleSoundBtn.click();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        dropCurrentBall();
+      }
     });
 
     /* ============================================================================
-       侧边栏抽屉与 Live2D 上半身放大 + 点击穿透与反馈共存
+       按权重随机背景图与 Live2D 上半身放大 + 点击穿透与动作反馈共存
        ============================================================================ */
-    function initSidebar() {
-      const btn = document.getElementById("stealthSidebarBtn");
-      const drawer = document.getElementById("sidebarDrawer");
-      const backdrop = document.getElementById("sidebarBackdrop");
-      const closeBtn = document.getElementById("sidebarCloseBtn");
+    function pickWeightedBackground(list) {
+      if (!Array.isArray(list) || list.length === 0) return null;
+      const totalWeight = list.reduce((sum, item) => sum + (Number(item.weight) > 0 ? Number(item.weight) : 1), 0);
+      let rand = Math.random() * totalWeight;
+      for (const item of list) {
+        const w = Number(item.weight) > 0 ? Number(item.weight) : 1;
+        if (rand < w) return item;
+        rand -= w;
+      }
+      return list[0];
+    }
 
-      const openSidebar = () => {
-        drawer.classList.add("open");
-        backdrop.classList.add("open");
-        drawer.setAttribute("aria-hidden", "false");
-      };
-      const closeSidebar = () => {
-        drawer.classList.remove("open");
-        backdrop.classList.remove("open");
-        drawer.setAttribute("aria-hidden", "true");
-      };
+    function applyRandomBackground(showTip = false) {
+      const chosen = pickWeightedBackground(BLOG_CONFIG.backgrounds);
+      if (chosen && chosen.url) {
+        document.documentElement.style.setProperty("--bg-image", `url("${chosen.url}")`);
+        const label = document.getElementById("currentBgLabel");
+        if (label) label.textContent = chosen.name || "切换背景";
+        if (showTip) showToast(`已切换背景：${chosen.name}`);
+      }
+    }
 
-      btn.addEventListener("click", openSidebar);
-      closeBtn.addEventListener("click", closeSidebar);
-      backdrop.addEventListener("click", closeSidebar);
+    const randomBgBtn = document.getElementById("randomBgBtn");
+    if (randomBgBtn) {
+      randomBgBtn.addEventListener("click", () => applyRandomBackground(true));
     }
 
     function applyUpperBodyLive2DLayout() {
@@ -2084,7 +1536,7 @@
           const cloned = new PointerEvent(e.type, {
             bubbles: true,
             cancelable: true,
-             view: window,
+            view: window,
             clientX: e.clientX,
             clientY: e.clientY,
             screenX: e.screenX,
@@ -2161,10 +1613,9 @@
       requestAnimationFrame(startLoop);
     }
 
-    applyRandomBackground();
-    initSidebar();
-    initAllUniversitySprites();
+    applyRandomBackground(false);
     buildAtlasDOM();
+    loadUniversityNetworkImages();
     resetGame();
     startLoop();
     initLive2D();
