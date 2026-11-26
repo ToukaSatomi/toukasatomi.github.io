@@ -510,6 +510,8 @@
       }
 
       // 游戏状态
+      
+
       const STORAGE_KEY_BEST = "tm_sharweek_american_blocks_best_v1";
       let score = 0;
       let bestScore = Number(localStorage.getItem(STORAGE_KEY_BEST) || 0);
@@ -799,7 +801,6 @@
 
       function updateHud() {
         scoreValueEl.textContent = String(score);
-        bestScoreValueEl.textContent = String(bestScore);
         linesClearedValueEl.textContent = String(totalLinesCleared);
         maxComboValueEl.textContent = String(maxComboLines);
       }

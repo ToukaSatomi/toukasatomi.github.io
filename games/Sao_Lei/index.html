@@ -159,6 +159,8 @@
     };
 
     (function initNoGuessMinesweeper() {
+      
+
       const DIFFICULTIES = {
         easy:   { key: "easy",   name: "初级", rows: 9,  cols: 9,  mines: 10, cellSize: 41 },
         medium: { key: "medium", name: "中级", rows: 11, cols: 16, mines: 26, cellSize: 34 },
@@ -331,7 +333,7 @@
           alpha: 0.92,
           delay: delayMs || 0,
           born: performance.now(),
-          color: isChord ? "rgba(191, 219, 254, 0.92)" : "rgba(255, 255, 255, 0.9)"
+          color: isChord ? "rgba(56, 189, 248, 0.95)" : "rgba(59, 130, 246, 0.94)"
         });
       }
 
@@ -718,7 +720,6 @@
         if (bumpProgress) triggerHudBump(progressValueEl);
 
         const bestVal = localStorage.getItem(bestStorageKey(currentDiff.key));
-        bestTimeValueEl.textContent = bestVal ? (Number(bestVal).toFixed(1) + "s") : "--";
       }
 
       function initBoardState(diff) {
@@ -1107,7 +1108,10 @@
               const dt = now - revealAnimTime[r][c];
               if (dt < 0) {
                 drawRoundedRect(ctx, x, y, w, h, rad);
-                ctx.fillStyle = "rgba(255, 255, 255, 0.84)";
+                const pGrad = ctx.createLinearGradient(x, y, x, y + h);
+                pGrad.addColorStop(0, "#60a5fa");
+                pGrad.addColorStop(1, "#2563eb");
+                ctx.fillStyle = pGrad;
                 ctx.fill();
                 ctx.restore();
                 continue;
@@ -1135,9 +1139,9 @@
                 ctx.arc(cx, cy, cellSize * 0.22, 0, Math.PI * 2);
                 ctx.fill();
               } else {
-                ctx.fillStyle = (isHover && chordReady) ? "rgba(209, 250, 229, 0.78)" : "rgba(241, 245, 249, 0.56)";
+                ctx.fillStyle = (isHover && chordReady) ? "rgba(209, 250, 229, 0.92)" : "rgba(248, 250, 252, 0.92)";
                 ctx.fill();
-                ctx.strokeStyle = (isHover && chordReady) ? "#10b981" : "rgba(148, 163, 184, 0.28)";
+                ctx.strokeStyle = (isHover && chordReady) ? "#10b981" : "rgba(148, 163, 184, 0.45)";
                 ctx.lineWidth = (isHover && chordReady) ? 2 : 1;
                 ctx.stroke();
 
@@ -1151,41 +1155,52 @@
                 }
               }
             } else {
-              // 未翻开毛玻璃凸起格
+              // 未翻开宝石蓝凸起方块（与已翻开的浅白底色形成鲜明对比）
               const grad = ctx.createLinearGradient(x, y, x, y + h);
               if (inChordPreview && chordReady) {
-                grad.addColorStop(0, "rgba(209, 250, 229, 0.96)");
-                grad.addColorStop(1, "rgba(167, 243, 208, 0.88)");
+                grad.addColorStop(0, "#34d399");
+                grad.addColorStop(1, "#059669");
               } else if (isHover || inChordPreview) {
-                grad.addColorStop(0, "rgba(239, 246, 255, 0.96)");
-                grad.addColorStop(1, "rgba(219, 234, 254, 0.88)");
+                grad.addColorStop(0, "#38bdf8");
+                grad.addColorStop(1, "#2563eb");
               } else {
-                grad.addColorStop(0, "rgba(255, 255, 255, 0.9)");
-                grad.addColorStop(1, "rgba(241, 245, 249, 0.74)");
+                grad.addColorStop(0, "#60a5fa");
+                grad.addColorStop(1, "#2563eb");
               }
               ctx.fillStyle = grad;
               ctx.fill();
               ctx.strokeStyle = (inChordPreview && chordReady)
-                ? "#10b981"
-                : (isHover ? "rgba(37, 99, 235, 0.65)" : "rgba(255, 255, 255, 0.96)");
-              ctx.lineWidth = (inChordPreview && chordReady) ? 2 : 1.4;
+                ? "#a7f3d0"
+                : (isHover ? "#e0f2fe" : "rgba(191, 219, 254, 0.92)");
+              ctx.lineWidth = (inChordPreview && chordReady) ? 2.2 : 1.5;
+              ctx.stroke();
+
+              // 顶部内高光立体边
+              ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(x + rad, y + 1.5);
+              ctx.lineTo(x + w - rad, y + 1.5);
               ctx.stroke();
 
               if (isFlg) {
-                ctx.strokeStyle = "#334155";
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 2.2;
                 ctx.beginPath();
                 ctx.moveTo(cx - cellSize * 0.12, cy + cellSize * 0.22);
                 ctx.lineTo(cx - cellSize * 0.12, cy - cellSize * 0.22);
                 ctx.stroke();
 
-                ctx.fillStyle = "#ef4444";
+                ctx.fillStyle = "#facc15";
+                ctx.strokeStyle = "#ef4444";
+                ctx.lineWidth = 1.2;
                 ctx.beginPath();
                 ctx.moveTo(cx - cellSize * 0.12, cy - cellSize * 0.22);
-                ctx.lineTo(cx + cellSize * 0.24, cy - cellSize * 0.1);
-                ctx.lineTo(cx - cellSize * 0.12, cy + cellSize * 0.04);
+                ctx.lineTo(cx + cellSize * 0.26, cy - cellSize * 0.09);
+                ctx.lineTo(cx - cellSize * 0.12, cy + cellSize * 0.05);
                 ctx.closePath();
                 ctx.fill();
+                ctx.stroke();
               }
             }
 

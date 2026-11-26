@@ -207,6 +207,8 @@
 
     (function init2048Game() {
       const SIZE = 4;
+      
+
       const STORAGE_KEY_BEST = "tm_sharweek_2048_best_v1";
 
       const TILE_FX_COLORS = {
@@ -659,7 +661,6 @@
 
       function updateHud(scoreGained, maxTileIncreased) {
         scoreValueEl.textContent = String(score);
-        bestScoreValueEl.textContent = String(bestScore);
         maxTileValueEl.textContent = String(getMaxTile(grid));
         movesCountValueEl.textContent = String(movesCount);
 
