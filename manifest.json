@@ -1,0 +1,69 @@
+{
+  "sections": {
+    "tech": [],
+    "literature": [],
+    "games": [
+      {
+        "name": "University_craft",
+        "path": "games/University_craft",
+        "targetUrl": "./games/University_craft/index.html",
+        "articleTitle": "合成名校",
+        "desc": "15阶名校校徽大圆盘物理合成游戏，从上海财经大学一路合成至普林斯顿大学",
+        "date": "2026-11-26",
+        "tags": [
+          "合成名校",
+          "合成大西瓜"
+        ]
+      },
+      {
+        "name": "Sao_Lei",
+        "path": "games/Sao_Lei",
+        "targetUrl": "./games/Sao_Lei/index.html",
+        "articleTitle": "无猜扫雷",
+        "desc": "100%纯逻辑可解无猜扫雷游戏，内置不等式子集约束求解器、3D碎块崩飞与激光锁定特效",
+        "date": "2026-11-25",
+        "tags": [
+          "无猜扫雷",
+          "逻辑推理"
+        ]
+      },
+      {
+        "name": "Hit_plane",
+        "path": "games/Hit_plane",
+        "targetUrl": "./games/Hit_plane/index.html",
+        "articleTitle": "苍穹弹幕",
+        "desc": "全鼠标可控华丽空战弹幕射击游戏，含前中后期七阶武器进化、六大关底Boss十八重符卡与动态难度系统",
+        "date": "2026-11-25",
+        "tags": [
+          "空战弹幕",
+          "STG射击"
+        ]
+      },
+      {
+        "name": "2048",
+        "path": "games/2048",
+        "targetUrl": "./games/2048/index.html",
+        "articleTitle": "2048",
+        "desc": "4×4毛玻璃数字滑块合成游戏",
+        "date": "2026-11-24",
+        "tags": [
+          "2048",
+          "数字合成"
+        ]
+      },
+      {
+        "name": "America_blocks",
+        "path": "games/America_blocks",
+        "targetUrl": "./games/America_blocks/index.html",
+        "articleTitle": "美国方块",
+        "desc": "5格正六边形棋盘消行拼图游戏",
+        "date": "2026-11-23",
+        "tags": [
+          "美国方块",
+          "六边形消行"
+        ]
+      }
+    ],
+    "resources": []
+  }
+}
