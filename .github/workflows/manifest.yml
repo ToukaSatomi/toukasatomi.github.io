@@ -1,0 +1,143 @@
+name: Build Blog Manifest
+
+on:
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - 'manifest.json'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan sections and generate manifest.json
+        run: |
+          python3 - << 'EOF'
+          import json
+          import os
+          import re
+          from html.parser import HTMLParser
+
+          SECTIONS = ["tech", "literature", "games", "resources"]
+
+          class MetaParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.in_title = False
+                  self.in_h1 = False
+                  self.in_p = False
+                  self.title = ""
+                  self.h1 = ""
+                  self.first_p = ""
+                  self.meta = {}
+
+              def handle_starttag(self, tag, attrs):
+                  t = tag.lower()
+                  d = dict((k.lower(), v) for k, v in attrs if v is not None)
+                  if t == "title":
+                      self.in_title = True
+                  elif t == "h1" and not self.h1:
+                      self.in_h1 = True
+                  elif t == "p" and not self.first_p:
+                      self.in_p = True
+                  elif t == "meta":
+                      name = d.get("name", "").lower()
+                      content = d.get("content", "")
+                      if name and content:
+                          self.meta[name] = content.strip()
+
+              def handle_endtag(self, tag):
+                  t = tag.lower()
+                  if t == "title":
+                      self.in_title = False
+                  elif t == "h1":
+                      self.in_h1 = False
+                  elif t == "p":
+                      self.in_p = False
+
+              def handle_data(self, data):
+                  if self.in_title:
+                      self.title += data
+                  if self.in_h1:
+                      self.h1 += data
+                  if self.in_p:
+                      self.first_p += data
+
+          def extract_meta(file_path, sub_name, rel_path, target_url):
+              info = {
+                  "name": sub_name,
+                  "path": rel_path,
+                  "targetUrl": target_url,
+                  "articleTitle": sub_name.replace("-", " ").replace("_", " "),
+                  "desc": f"点击进入查看 /{rel_path} 详细内容",
+                  "date": "子页面",
+                  "tags": [sub_name],
+              }
+              try:
+                  with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                      parser = MetaParser()
+                      parser.feed(f.read())
+
+                  raw_title = parser.meta.get("post-title") or parser.h1 or parser.title
+                  if raw_title and raw_title.strip():
+                      cleaned = re.sub(r"\s*[|\-—]\s*TM_Sharweek.*$", "", raw_title, flags=re.I).strip()
+                      if cleaned:
+                          info["articleTitle"] = cleaned
+
+                  desc = parser.meta.get("description") or parser.first_p
+                  if desc and desc.strip():
+                      info["desc"] = desc.strip()[:120]
+
+                  post_date = parser.meta.get("post-date")
+                  if post_date:
+                      info["date"] = post_date
+
+                  post_tags = parser.meta.get("post-tags")
+                  if post_tags:
+                      tags = [x.strip() for x in post_tags.split(",") if x.strip()]
+                      if tags:
+                          info["tags"] = tags
+              except Exception:
+                  pass
+              return info
+
+          manifest = {"sections": {}}
+          for sec in SECTIONS:
+              items = []
+              if os.path.isdir(sec):
+                  for entry in sorted(os.listdir(sec)):
+                      if entry.startswith("."):
+                          continue
+                      full = os.path.join(sec, entry)
+                      if os.path.isdir(full):
+                          idx_file = os.path.join(full, "index.html")
+                          if os.path.isfile(idx_file):
+                              rel = f"{sec}/{entry}"
+                              items.append(extract_meta(idx_file, entry, rel, f"./{rel}/index.html"))
+                      elif os.path.isfile(full) and entry.lower().endswith((".html", ".htm")) and entry.lower() != "index.html":
+                          sub_name = re.sub(r"\.html?$", "", entry, flags=re.I)
+                          rel = f"{sec}/{entry}"
+                          items.append(extract_meta(full, sub_name, rel, f"./{rel}"))
+              items.sort(key=lambda x: (x.get("date", ""), x.get("name", "")), reverse=True)
+              manifest["sections"][sec] = items
+
+          with open("manifest.json", "w", encoding="utf-8") as f:
+              json.dump(manifest, f, ensure_ascii=False, indent=2)
+          EOF
+
+      - name: Commit and push manifest.json if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: auto-update manifest.json"
+            git push
+          fi
