@@ -5,15 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>合成名校 | TM_Sharweek</title>
   <meta name="post-title" content="合成名校" />
-  <meta name="description" content="15阶名校校徽物理碰撞合成游戏，从上海财经大学一路合成至普林斯顿大学" />
+  <meta name="description" content="15阶名校校徽大圆盘物理合成游戏，从上海财经大学一路合成至普林斯顿大学" />
   <meta name="post-date" content="2026-11-26" />
   <meta name="post-tags" content="合成名校,合成大西瓜" />
-  <link rel="stylesheet" href="../../style.css?v=20261126b" />
-  <link rel="stylesheet" href="./style.css?v=20261126b" />
+  <link rel="stylesheet" href="../../style.css?v=20261126c" />
+  <link rel="stylesheet" href="./style.css?v=20261126c" />
   <style>
     /* 紧凑一屏双栏布局兜底（与美国方块、2048、无猜扫雷完全统一，电脑端一屏免滚动） */
-    .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1000px; }
-    .glass-main-frame.game-uni-frame { max-width: 900px; padding: 15px 22px; }
+    .main-stage.game-page-stage { min-height: 100vh; padding: 8px 16px; max-width: 1080px; }
+    .glass-main-frame.game-uni-frame { max-width: 980px; padding: 12px 20px; }
     .game-top-bar { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.72); }
     .game-title-group, .top-action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
     .game-logo-badge { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg,#2563eb,#0ea5e9); color: #fff; font-weight: 800; font-size: 1.08rem; display: flex; align-items: center; justify-content: center; }
@@ -27,7 +27,7 @@
     @keyframes hudScoreBump { 0% { transform: scale(1); } 45% { transform: scale(1.24); color: #2563eb; } 100% { transform: scale(1); } }
     .game-arena { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 244px; gap: 14px; align-items: stretch; }
     .board-glass-card { position: relative; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
-    #suikaCanvas { display: block; max-width: 100%; height: auto; border-radius: 14px; cursor: pointer; touch-action: none; }
+    #suikaCanvas { display: block; max-width: 100%; max-height: calc(100vh - 186px); width: auto; height: auto; border-radius: 16px; cursor: pointer; touch-action: none; }
     .tray-glass-panel { border-radius: 20px; background: rgba(255,255,255,0.52); border: 1px solid rgba(255,255,255,0.88); padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 7px; }
     .uni-next-card { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 13px; background: rgba(255,255,255,0.66); border: 1px solid rgba(255,255,255,0.92); }
     .uni-next-label { font-size: 0.68rem; font-weight: 700; color: #64748b; }
@@ -62,8 +62,8 @@
         </div>
 
         <div class="top-action-group">
-          <button type="button" id="jostleBoxBtn" class="back-home-btn" title="摇晃培养皿助推校徽碰撞 (快捷键: E)">
-            🌪 摇盒 (3)
+          <button type="button" id="jostleBoxBtn" class="back-home-btn" title="摇晃大圆盘助推校徽碰撞 (快捷键: E)">
+            🌪 摇盘 (3)
           </button>
           <button type="button" id="randomBgBtn" class="back-home-btn" title="按设定权重随机切换背景图">
             🎲 <span id="currentBgLabel">切换背景</span>
@@ -100,13 +100,13 @@
         </div>
       </section>
 
-      <!-- 3. 左侧合成培养皿主画布 + 右侧 15 阶名校校徽图鉴 -->
-      <section class="game-arena" aria-label="合成培养皿与右侧校徽图鉴">
+      <!-- 3. 左侧大圆形培养皿主画布 + 右侧 15 阶名校校徽图鉴 -->
+      <section class="game-arena" aria-label="大圆形合成培养皿与右侧校徽图鉴">
         <div class="board-glass-card" id="arenaCard">
-          <canvas id="suikaCanvas" width="440" height="384" aria-label="合成名校物理画布"></canvas>
+          <canvas id="suikaCanvas" width="520" height="490" aria-label="合成名校大圆形容器画布"></canvas>
 
           <div id="gameOverOverlay" class="gameover-overlay" role="dialog" aria-modal="true">
-            <h2 id="gameOverTitle">培养皿已满 · 学术结算</h2>
+            <h2 id="gameOverTitle">圆形培养皿已满 · 学术结算</h2>
             <p id="gameOverSummary"></p>
             <button type="button" id="overlayRestartBtn" class="back-home-btn is-primary" style="padding: 9px 22px; font-size: 0.9rem;">
               ↻ 再来一局
@@ -192,14 +192,14 @@
         name: "上海财经大学",
         short: "上财",
         year: "1917",
-        radius: 16,
+        radius: 13,
         score: 4,
         primary: "#8c1515",
         secondary: "#5c0b0b",
         accent: "#fbbf24",
         ringText: "SHANGHAI UNIVERSITY OF FINANCE & ECONOMICS",
         motif: "sufe_coin",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/shanghai-university-of-finance-and-economics-logo-1024px.png",
+        logoUrl: "./Shanghai_University_of_Finance_and_Economics_logo.jpg",
         backupUrls: [
           "https://www.urongda.com/og-images/shanghai-university-of-finance-and-economics.png",
           "https://upload.wikimedia.org/wikipedia/zh/4/4d/Shanghai_University_of_Finance_and_Economics_logo.jpg"
@@ -210,14 +210,14 @@
         name: "北京邮电大学",
         short: "北邮",
         year: "1955",
-        radius: 20,
+        radius: 16,
         score: 10,
         primary: "#003a8c",
         secondary: "#172554",
         accent: "#93c5fd",
         ringText: "BEIJING UNIVERSITY OF POSTS & TELECOM",
         motif: "bupt_dove",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/beijing-university-of-posts-and-telecommunications-logo-1024px.png",
+        logoUrl: "./Emblem_of_Beijing_University_of_Posts_and_Telecommunications.svg",
         backupUrls: [
           "https://upload.wikimedia.org/wikipedia/zh/b/bb/Emblem_of_Beijing_University_of_Posts_and_Telecommunications.svg"
         ]
@@ -227,14 +227,14 @@
         name: "南方科技大学",
         short: "南科大",
         year: "2010",
-        radius: 24,
+        radius: 20,
         score: 20,
         primary: "#ea580c",
         secondary: "#9a3412",
         accent: "#2dd4bf",
         ringText: "SOUTHERN UNIVERSITY OF SCIENCE & TECH",
         motif: "sustech_torch",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/southern-university-of-science-and-technology-logo-1024px.png",
+        logoUrl: "./southern-university-of-science-and-technology-logo-1024px.png",
         backupUrls: [
           "https://upload.wikimedia.org/wikipedia/en/1/11/SUSTech_University_Logo.png"
         ]
@@ -244,14 +244,14 @@
         name: "上海科技大学",
         short: "上科大",
         year: "2013",
-        radius: 28,
+        radius: 24,
         score: 36,
         primary: "#991b1b",
         secondary: "#450a0a",
         accent: "#fca5a5",
         ringText: "SHANGHAITECH UNIVERSITY · 2013",
         motif: "shanghaitech_tower",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/shanghaitech-university-logo-1024px.png",
+        logoUrl: "./ShanghaiTech_University_Emblem.svg.webp",
         backupUrls: [
           "https://thumb.wikimedia.org/wikipedia/zh/thumb/a/a8/ShanghaiTech_University_Emblem.svg/1280px-ShanghaiTech_University_Emblem.svg.png"
         ]
@@ -261,14 +261,14 @@
         name: "西湖大学",
         short: "西湖",
         year: "2018",
-        radius: 32,
+        radius: 28,
         score: 60,
         primary: "#003d79",
         secondary: "#0f172a",
         accent: "#f59e0b",
         ringText: "WESTLAKE UNIVERSITY · HANGZHOU",
         motif: "westlake_moon",
-        logoUrl: "https://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20190309/8496f11035f94607ac6bdbd62be8afa4.jpeg",
+        logoUrl: "./Westlake_University.png",
         backupUrls: [
           "https://en.westlake.edu.cn/about/VIS/202308/W020230816486525158958.png",
           "https://upload.wikimedia.org/wikipedia/en/d/db/Westlake_University.png"
@@ -279,14 +279,14 @@
         name: "中国人民大学",
         short: "人大",
         year: "1937",
-        radius: 37,
+        radius: 32,
         score: 96,
         primary: "#9f1239",
         secondary: "#4c0519",
         accent: "#fde047",
         ringText: "RENMIN UNIVERSITY OF CHINA · 1937",
         motif: "ruc_triple_ren",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/renmin-university-of-china-logo-1024px.png",
+        logoUrl: "./Renmin_University_of_China_logo.svg",
         backupUrls: [
           "https://upload.wikimedia.org/wikipedia/zh/1/11/Renmin_University_of_China_logo.svg"
         ]
@@ -296,14 +296,14 @@
         name: "南京大学",
         short: "南大",
         year: "1902",
-        radius: 42,
+        radius: 37,
         score: 145,
         primary: "#63065f",
         secondary: "#3b0764",
         accent: "#fde047",
         ringText: "NANJING UNIVERSITY · 1902",
         motif: "nju_cedar_shield",
-        logoUrl: "https://www.urongda.com/images/normal/medium/nanjing-university-logo-1024px.png",
+        logoUrl: "./nanjing-university.svg",
         backupUrls: [
           "https://cdn.worldvectorlogo.com/logos/nanjing-university.svg",
           "https://innovation-entrepreneurship.nju.edu.cn/_upload/article/images/b9/1e/f35c5870438e88791d2a7065de3d/ea52e060-9520-481e-a1d0-8b9d563978e4.gif"
@@ -314,14 +314,14 @@
         name: "中国科学院大学",
         short: "国科大",
         year: "1978",
-        radius: 47,
+        radius: 42,
         score: 215,
         primary: "#003f88",
         secondary: "#082f49",
         accent: "#7dd3fc",
         ringText: "UNIVERSITY OF CHINESE ACADEMY OF SCIENCES",
         motif: "ucas_atom",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/university-of-chinese-academy-of-sciences-logo-1024px.png",
+        logoUrl: "./Seal_of_the_Chinese_Academy_of_Sciences.png",
         backupUrls: [
           "https://www.urongda.com/og-images/university-of-chinese-academy-of-sciences.png",
           "https://upload.wikimedia.org/wikipedia/commons/d/de/Seal_of_the_Chinese_Academy_of_Sciences.png"
@@ -332,14 +332,14 @@
         name: "上海交通大学",
         short: "上交",
         year: "1896",
-        radius: 53,
+        radius: 47,
         score: 310,
         primary: "#991b1b",
         secondary: "#450a0a",
         accent: "#facc15",
         ringText: "SHANGHAI JIAO TONG UNIVERSITY · 1896",
         motif: "sjtu_gear_anvil",
-        logoUrl: "https://www.urongda.com/og-images/shanghai-jiao-tong-university.png",
+        logoUrl: "./SJTU_emblem.svg.webp",
         backupUrls: [
           "https://thumb.wikimedia.org/wikipedia/zh/thumb/d/d5/SJTU_emblem.svg/1280px-SJTU_emblem.svg.png"
         ]
@@ -349,14 +349,14 @@
         name: "清华大学",
         short: "清华",
         year: "1911",
-        radius: 59,
+        radius: 53,
         score: 450,
         primary: "#660874",
         secondary: "#2e1065",
         accent: "#e9d5ff",
         ringText: "TSINGHUA UNIVERSITY · 自强不息 厚德载物",
         motif: "tsinghua_seal",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/tsinghua-university-logo-1024px.png",
+        logoUrl: "./Tsinghua_University_Logo.svg",
         backupUrls: [
           "https://vi.tsinghua.edu.cn/__local/8/1C/21/2F02A66E31BF084FE340463BB47_B9A95F73_185BC.jpg",
           "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ec/Tsinghua_University_Logo.svg/512px-Tsinghua_University_Logo.svg.png"
@@ -367,14 +367,14 @@
         name: "北京大学",
         short: "北大",
         year: "1898",
-        radius: 66,
+        radius: 59,
         score: 640,
         primary: "#94070a",
         secondary: "#4c0519",
         accent: "#ffe4e6",
         ringText: "PEKING UNIVERSITY · 1898",
         motif: "pku_seal",
-        logoUrl: "https://cdn.urongda.com/images/normal/medium/peking-university-logo-1024px.png",
+        logoUrl: "./Peking_University_seal.svg",
         backupUrls: [
           "https://upload.wikimedia.org/wikipedia/commons/f/f4/Peking_University_seal.svg"
         ]
@@ -384,14 +384,14 @@
         name: "东京大学",
         short: "东大",
         year: "1877",
-        radius: 73,
+        radius: 66,
         score: 900,
         primary: "#0284c7",
         secondary: "#0c4a6e",
         accent: "#facc15",
         ringText: "THE UNIVERSITY OF TOKYO · 1877",
         motif: "utokyo_ginkgo",
-        logoUrl: "https://www.u-tokyo.ac.jp/content/400235961.png",
+        logoUrl: "./400235961.png",
         backupUrls: [
           "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/University_of_Tokyo_symbol.svg/512px-University_of_Tokyo_symbol.svg.png"
         ]
@@ -401,14 +401,14 @@
         name: "MIT",
         short: "MIT",
         year: "1861",
-        radius: 81,
+        radius: 73,
         score: 1280,
         primary: "#a31f34",
         secondary: "#334155",
         accent: "#cbd5e1",
         ringText: "MASSACHUSETTS INSTITUTE OF TECHNOLOGY · 1861",
         motif: "mit_shield",
-        logoUrl: "https://brand.mit.edu/sites/default/files/styles/1200w/public/2023-09/seal.png?itok=kRuULCZy",
+        logoUrl: "./MIT_Seal.svg.webp",
         backupUrls: [
           "https://thumb.wikimedia.org/wikipedia/en/thumb/4/44/MIT_Seal.svg/1280px-MIT_Seal.svg.png"
         ]
@@ -418,14 +418,14 @@
         name: "巴黎高师",
         short: "巴黎高师",
         year: "1794",
-        radius: 90,
+        radius: 81,
         score: 1850,
         primary: "#1e3a8a",
         secondary: "#0f172a",
         accent: "#fbbf24",
         ringText: "ÉCOLE NORMALE SUPÉRIEURE · PARIS · 1794",
         motif: "ens_laurel",
-        logoUrl: "https://www.di.ens.fr/data/assets/img/enslogo.png",
+        logoUrl: "./Logo_École_normale_supérieure_-_PSL_(ENS-PSL).svg",
         backupUrls: [
           "https://static.psl.eu/sites/default/files/2020-08/logo_ens-psl_0.png",
           "https://upload.wikimedia.org/wikipedia/commons/7/74/Logo_%C3%89cole_normale_sup%C3%A9rieure_-_PSL_%28ENS-PSL%29.svg"
@@ -436,14 +436,14 @@
         name: "普林斯顿大学",
         short: "普林斯顿",
         year: "1746",
-        radius: 100,
+        radius: 90,
         score: 3000,
         primary: "#ea580c",
         secondary: "#090d16",
         accent: "#fde047",
         ringText: "PRINCETON UNIVERSITY · DEI SVB NVMINE VIGET",
         motif: "princeton_shield",
-        logoUrl: "https://5b0988e595225.cdn.sohucs.com/q_70,c_zoom,w_640/images/20171110/12f1e12c0ac0419aa7f6283664824134.jpg",
+        logoUrl: "./Princeton_seal.svg",
         backupUrls: [
           "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d0/Princeton_seal.svg/330px-Princeton_seal.svg.png"
         ]
@@ -848,7 +848,7 @@
     const soundFX = new AcademicSoundEngine();
 
     /* ============================================================================
-       游戏主逻辑与 2D 刚体圆子步物理引擎 + localStorage 最高分存档
+       大圆形培养皿容器参数 + 2D 刚体圆子步物理引擎 + localStorage 最高分存档
        ============================================================================ */
     const STORAGE_KEY_BEST = "tm_sharweek_merge_uni_best_v1";
 
@@ -877,13 +877,18 @@
     const canvas = document.getElementById("suikaCanvas");
     const ctx = canvas.getContext("2d");
 
-    const W = canvas.width;   // 440
-    const H = canvas.height;  // 384
-    const WALL_LEFT = 14;
-    const WALL_RIGHT = W - 14;
-    const FLOOR_Y = H - 12;
-    const DEADLINE_Y = 64;
-    const DROP_Y = 34;
+    const W = canvas.width;   // 520
+    const H = canvas.height;  // 490
+    // 大圆形培养皿几何参数（中心 (260, 258)，半径 220，顶部留出投球开口）
+    const BOWL_CX = W / 2;    // 260
+    const BOWL_CY = 258;
+    const BOWL_R = 220;
+    const DEADLINE_Y = 86;    // 圆形容器顶部弦线警戒高度
+    const DROP_Y = 48;        // 顶部投球高度
+    // 计算警戒线与大圆的交点弦长，用于绘制顶部开口与限制投球横坐标
+    const DEADLINE_DY = BOWL_CY - DEADLINE_Y; // 136
+    const DEADLINE_HALF_CHORD = Math.sqrt(Math.max(0, BOWL_R * BOWL_R - DEADLINE_DY * DEADLINE_DY)); // ~114.8
+    const BOWL_OPEN_ANGLE = Math.atan2(DEADLINE_HALF_CHORD, DEADLINE_DY); // 顶部开口半角 (~0.70 rad)
 
     let balls = [];
     let particles = [];
@@ -900,7 +905,7 @@
 
     let currentDropLevel = 0;
     let nextDropLevel = 1;
-    let pointerX = W / 2;
+    let pointerX = BOWL_CX;
     let dropCooldown = 0;
     let comboChainCount = 0;
     let comboResetTimer = 0;
@@ -997,7 +1002,7 @@
       const topUni = UNIVERSITIES[highestLevelReached];
       topUniEl.textContent = `Lv.${highestLevelReached + 1} ${topUni.short}`;
       maxComboEl.textContent = `×${maxComboRecord}`;
-      jostleBoxBtn.textContent = `🌪 摇盒 (${jostleCharges})`;
+      jostleBoxBtn.textContent = `🌪 摇盘 (${jostleCharges})`;
       jostleBoxBtn.disabled = jostleCharges <= 0 || isGameOver;
     }
 
@@ -1011,9 +1016,34 @@
       return 0;
     }
 
+    // 限制投球横坐标在大圆形顶部开口范围内，使球落下后顺畅滑入大圆内壁
     function clampDropX(x, level) {
       const r = UNIVERSITIES[level].radius;
-      return Math.max(WALL_LEFT + r + 2, Math.min(WALL_RIGHT - r - 2, x));
+      const maxOffset = Math.max(24, DEADLINE_HALF_CHORD - r - 4);
+      return Math.max(BOWL_CX - maxOffset, Math.min(BOWL_CX + maxOffset, x));
+    }
+
+    // 计算给定横坐标 x 在大圆下半部内壁的落点 Y 坐标（供瞄准虚线使用）
+    function getBowlFloorYAtX(x, ballRadius = 0) {
+      const effR = Math.max(10, BOWL_R - ballRadius);
+      const dx = x - BOWL_CX;
+      if (Math.abs(dx) >= effR) return BOWL_CY;
+      return BOWL_CY + Math.sqrt(effR * effR - dx * dx);
+    }
+
+    // 将合成的新球位置约束在大圆形容器内壁之内
+    function clampBallInsideBowl(x, y, radius) {
+      const maxCenterDist = Math.max(4, BOWL_R - radius);
+      const dx = x - BOWL_CX;
+      const dy = y - BOWL_CY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > maxCenterDist && dist > 0.001) {
+        return {
+          x: BOWL_CX + (dx / dist) * maxCenterDist,
+          y: BOWL_CY + (dy / dist) * maxCenterDist
+        };
+      }
+      return { x, y };
     }
 
     function spawnMergeEffects(x, y, newLevel, combo) {
@@ -1064,11 +1094,13 @@
       if (newLevel >= 8) {
         screenShakeMag = Math.min(11, 3 + (newLevel - 7) * 1.4);
         for (let k = 0; k < 24; k++) {
+          const ang = Math.random() * Math.PI * 2;
+          const rad = Math.random() * (BOWL_R * 0.72);
           backgroundConfetti.push({
-            x: WALL_LEFT + Math.random() * (WALL_RIGHT - WALL_LEFT),
-            y: DEADLINE_Y + Math.random() * 40,
+            x: BOWL_CX + Math.cos(ang) * rad,
+            y: BOWL_CY - Math.abs(Math.sin(ang) * rad * 0.6),
             vx: (Math.random() - 0.5) * 3.5,
-            vy: 1.5 + Math.random() * 2.8,
+            vy: 1.4 + Math.random() * 2.6,
             color: k % 2 === 0 ? uni.accent : uni.primary,
             w: 6 + Math.random() * 5,
             h: 3 + Math.random() * 3,
@@ -1091,8 +1123,8 @@
         level: lvl,
         x: spawnX,
         y: DROP_Y,
-        vx: (Math.random() - 0.5) * 0.15,
-        vy: 1.8,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: 2.1,
         radius: r,
         mass: r * r,
         angle: 0,
@@ -1113,7 +1145,7 @@
     }
 
     /* ============================================================================
-       物理更新（每帧 8 子步，保证大球堆叠稳定不穿模）
+       大圆形容器物理更新（每帧 8 子步，支持沿圆弧内壁自然滚动、弹跳与滑落）
        ============================================================================ */
     function stepPhysics() {
       if (isGameOver) return;
@@ -1132,7 +1164,7 @@
       const SUB_STEPS = 8;
       const GRAVITY = 0.28 / SUB_STEPS;
       const RESTITUTION = 0.24;
-      const FRICTION = 0.992;
+      const FRICTION = 0.993;
 
       let mergedPair = null;
 
@@ -1146,28 +1178,55 @@
           b.angle += b.vAngle / SUB_STEPS;
           b.vAngle *= 0.995;
 
-          if (b.x - b.radius < WALL_LEFT) {
-            b.x = WALL_LEFT + b.radius;
-            if (b.vx < 0) b.vx = -b.vx * RESTITUTION;
-          } else if (b.x + b.radius > WALL_RIGHT) {
-            b.x = WALL_RIGHT - b.radius;
-            if (b.vx > 0) b.vx = -b.vx * RESTITUTION;
-          }
+          // 大圆形容器内壁碰撞检测与弧面滚动物理响应
+          const maxCenterDist = Math.max(4, BOWL_R - b.radius);
+          const dx = b.x - BOWL_CX;
+          const dy = b.y - BOWL_CY;
+          const dist = Math.hypot(dx, dy);
 
-          if (b.y + b.radius > FLOOR_Y) {
-            b.y = FLOOR_Y - b.radius;
-            if (b.vy > 1.5 && step === 0) {
-              b.scaleX = 1.14;
-              b.scaleY = 0.86;
-              soundFX.playBounce(Math.abs(b.vy));
+          // 顶部投球口：只有当球已经进入警戒线下方或碰撞到左右圆弧壁时才施加圆形内壁约束
+          const inTopDropChannel = !b.hasTouched && b.y < DEADLINE_Y && Math.abs(dx) < DEADLINE_HALF_CHORD - b.radius;
+
+          if (!inTopDropChannel && dist > maxCenterDist && dist > 0.001) {
+            const nx = dx / dist; // 指向圆外侧的单位法向量
+            const ny = dy / dist;
+
+            // 将球体推回大圆形内壁上
+            b.x = BOWL_CX + nx * maxCenterDist;
+            b.y = BOWL_CY + ny * maxCenterDist;
+
+            // 法向与切向速度分解
+            const vNormal = b.vx * nx + b.vy * ny;
+            if (vNormal > 0) {
+              if (vNormal > 1.55 && step === 0) {
+                b.scaleX = 1.13;
+                b.scaleY = 0.87;
+                soundFX.playBounce(vNormal);
+              }
+
+              // 沿圆弧切线方向（顺时针单位切向量 tx = -ny, ty = nx）
+              const tx = -ny;
+              const ty = nx;
+              const vTangent = b.vx * tx + b.vy * ty;
+
+              // 反弹法向速度 + 保留切向弧面滑行速度
+              const newVNormal = -vNormal * RESTITUTION;
+              const newVTangent = vTangent * 0.985;
+
+              b.vx = nx * newVNormal + tx * newVTangent;
+              b.vy = ny * newVNormal + ty * newVTangent;
+
+              // 根据沿圆弧滑动的切向速度更新球体自转角速度
+              b.vAngle = newVTangent / Math.max(b.radius, 12);
             }
-            if (b.vy > 0) b.vy = -b.vy * RESTITUTION;
-            b.vx *= 0.95;
-            b.vAngle = b.vx / Math.max(b.radius, 12);
-            b.hasTouched = true;
+
+            if (dy > -BOWL_R * 0.55) {
+              b.hasTouched = true;
+            }
           }
         }
 
+        // 球与球之间的刚体碰撞与同级合成检测
         for (let i = 0; i < balls.length; i++) {
           const a = balls[i];
           for (let j = i + 1; j < balls.length; j++) {
@@ -1259,16 +1318,15 @@
         refreshAtlasStates();
 
         const newR = uni.radius;
-        const clampedX = Math.max(WALL_LEFT + newR, Math.min(WALL_RIGHT - newR, mx));
-        const clampedY = Math.min(FLOOR_Y - newR, my);
+        const clampedPos = clampBallInsideBowl(mx, my, newR);
 
         balls.push({
           id: ballIdSeq++,
           level: nextLvl,
-          x: clampedX,
-          y: clampedY,
+          x: clampedPos.x,
+          y: clampedPos.y,
           vx: (a.vx + b.vx) * 0.35,
-          vy: -1.4,
+          vy: -1.3,
           radius: newR,
           mass: newR * newR,
           angle: 0,
@@ -1281,8 +1339,8 @@
         });
 
         for (const other of balls) {
-          const dx = other.x - clampedX;
-          const dy = other.y - clampedY;
+          const dx = other.x - clampedPos.x;
+          const dy = other.y - clampedPos.y;
           const d = Math.hypot(dx, dy);
           if (d > 1 && d < newR * 2.5) {
             const push = (1 - d / (newR * 2.5)) * 2.4;
@@ -1292,10 +1350,11 @@
         }
 
         soundFX.playMerge(nextLvl, comboChainCount);
-        spawnMergeEffects(clampedX, clampedY, nextLvl, comboChainCount);
+        spawnMergeEffects(clampedPos.x, clampedPos.y, nextLvl, comboChainCount);
         updateHUD(true);
       }
 
+      // 警戒线溢出检测（当球已落稳且球顶越过圆形容器顶部弦线 DEADLINE_Y 时开始读秒）
       let anyOverDeadline = false;
       for (const b of balls) {
         b.scaleX += (1 - b.scaleX) * 0.22;
@@ -1347,12 +1406,14 @@
         c.y += c.vy;
         c.rot += c.vRot;
         c.alpha -= 0.012;
-        if (c.alpha <= 0 || c.y > FLOOR_Y) backgroundConfetti.splice(i, 1);
+        if (c.alpha <= 0 || Math.hypot(c.x - BOWL_CX, c.y - BOWL_CY) > BOWL_R) {
+          backgroundConfetti.splice(i, 1);
+        }
       }
     }
 
     /* ============================================================================
-       渲染画面
+       渲染大圆形水晶培养皿画面
        ============================================================================ */
     function drawStar(ctx, x, y, r, rot) {
       ctx.save();
@@ -1380,58 +1441,106 @@
         ctx.translate(sx, sy);
       }
 
-      const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-      bgGrad.addColorStop(0, "rgba(248, 250, 252, 0.78)");
-      bgGrad.addColorStop(1, "rgba(226, 232, 240, 0.88)");
-      ctx.fillStyle = bgGrad;
-      ctx.fillRect(0, 0, W, H);
+      // 1. 绘制大圆形水晶培养皿的立体底座与磨砂玻璃内腔
+      ctx.save();
+      const bowlGrad = ctx.createRadialGradient(
+        BOWL_CX - 48,
+        BOWL_CY - 56,
+        18,
+        BOWL_CX,
+        BOWL_CY,
+        BOWL_R
+      );
+      bowlGrad.addColorStop(0, "rgba(255, 255, 255, 0.90)");
+      bowlGrad.addColorStop(0.68, "rgba(241, 245, 249, 0.84)");
+      bowlGrad.addColorStop(1, "rgba(219, 234, 254, 0.92)");
 
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.14)";
+      ctx.beginPath();
+      ctx.arc(BOWL_CX, BOWL_CY, BOWL_R, 0, Math.PI * 2);
+      ctx.fillStyle = bowlGrad;
+      ctx.fill();
+
+      // 圆形培养皿内部的同心极坐标刻度环与十字基准线
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.18)";
       ctx.lineWidth = 1;
-      for (let gx = WALL_LEFT + 40; gx < WALL_RIGHT; gx += 44) {
+      for (const ringR of [68, 136, 188]) {
         ctx.beginPath();
-        ctx.moveTo(gx, DEADLINE_Y);
-        ctx.lineTo(gx, FLOOR_Y);
+        ctx.arc(BOWL_CX, BOWL_CY, ringR, 0, Math.PI * 2);
         ctx.stroke();
       }
-      for (let gy = DEADLINE_Y + 40; gy < FLOOR_Y; gy += 44) {
-        ctx.beginPath();
-        ctx.moveTo(WALL_LEFT, gy);
-        ctx.lineTo(WALL_RIGHT, gy);
-        ctx.stroke();
-      }
+      ctx.beginPath();
+      ctx.moveTo(BOWL_CX - BOWL_R + 12, BOWL_CY);
+      ctx.lineTo(BOWL_CX + BOWL_R - 12, BOWL_CY);
+      ctx.moveTo(BOWL_CX, DEADLINE_Y + 8);
+      ctx.lineTo(BOWL_CX, BOWL_CY + BOWL_R - 12);
+      ctx.stroke();
+      ctx.restore();
 
-      ctx.strokeStyle = "rgba(37, 99, 235, 0.38)";
-      ctx.lineWidth = 4;
+      // 2. 绘制大圆形容器的外环双层玻璃器皿壁（顶部留出投球开口弧段，其余圆弧加粗高亮）
+      const startArc = -Math.PI / 2 + BOWL_OPEN_ANGLE;
+      const endArc = (Math.PI * 3) / 2 - BOWL_OPEN_ANGLE;
+
+      // 顶部投球口半透明引导虚线弧
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.45)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(BOWL_CX, BOWL_CY, BOWL_R, endArc, startArc + Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
+      // 主圆弧器皿壁（宝石蓝水晶玻璃质感）
+      ctx.save();
+      ctx.strokeStyle = "rgba(37, 99, 235, 0.48)";
+      ctx.lineWidth = 6;
       ctx.lineCap = "round";
       ctx.beginPath();
-      ctx.moveTo(WALL_LEFT, DEADLINE_Y - 12);
-      ctx.lineTo(WALL_LEFT, FLOOR_Y);
-      ctx.lineTo(WALL_RIGHT, FLOOR_Y);
-      ctx.lineTo(WALL_RIGHT, DEADLINE_Y - 12);
+      ctx.arc(BOWL_CX, BOWL_CY, BOWL_R, startArc, endArc);
       ctx.stroke();
 
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(BOWL_CX, BOWL_CY, BOWL_R - 3, startArc, endArc);
+      ctx.stroke();
+
+      // 顶部开口两侧的圆润玻璃唇口端点
+      for (const ang of [startArc, endArc]) {
+        const lx = BOWL_CX + Math.cos(ang) * BOWL_R;
+        const ly = BOWL_CY + Math.sin(ang) * BOWL_R;
+        ctx.fillStyle = "#2563eb";
+        ctx.beginPath();
+        ctx.arc(lx, ly, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // 3. 圆形培养皿顶部警戒弦线
       const warnRatio = Math.min(1, deadlineOverTimer / 135);
       ctx.save();
       ctx.setLineDash([7, 6]);
       ctx.strokeStyle = warnRatio > 0
-        ? `rgba(220, 38, 38, ${0.55 + 0.45 * Math.sin(Date.now() * 0.015)})`
-        : "rgba(239, 68, 68, 0.38)";
-      ctx.lineWidth = warnRatio > 0 ? 2.5 : 1.5;
+        ? `rgba(220, 38, 38, ${0.58 + 0.42 * Math.sin(Date.now() * 0.015)})`
+        : "rgba(239, 68, 68, 0.42)";
+      ctx.lineWidth = warnRatio > 0 ? 2.6 : 1.6;
       ctx.beginPath();
-      ctx.moveTo(WALL_LEFT + 4, DEADLINE_Y);
-      ctx.lineTo(WALL_RIGHT - 4, DEADLINE_Y);
+      ctx.moveTo(BOWL_CX - DEADLINE_HALF_CHORD + 4, DEADLINE_Y);
+      ctx.lineTo(BOWL_CX + DEADLINE_HALF_CHORD - 4, DEADLINE_Y);
       ctx.stroke();
       if (warnRatio > 0.1) {
         ctx.fillStyle = "#dc2626";
         ctx.font = '700 11px "JetBrains Mono", monospace';
-        ctx.fillText(`⚠ 培养皿即将溢出 ${(100 - warnRatio * 100).toFixed(0)}%`, WALL_LEFT + 12, DEADLINE_Y - 6);
+        ctx.textAlign = "center";
+        ctx.fillText(`⚠ 圆盘即将溢出 ${(100 - warnRatio * 100).toFixed(0)}%`, BOWL_CX, DEADLINE_Y - 7);
       }
       ctx.restore();
 
+      // 4. 顶部待投掷校徽与直达大圆底壁的激光瞄准线
       if (!isGameOver && dropCooldown <= 4) {
         const previewUni = UNIVERSITIES[currentDropLevel];
         const dropX = clampDropX(pointerX, currentDropLevel);
+        const floorYAtDrop = getBowlFloorYAtX(dropX, previewUni.radius);
 
         ctx.save();
         ctx.setLineDash([4, 5]);
@@ -1439,7 +1548,7 @@
         ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(dropX, DROP_Y + previewUni.radius);
-        ctx.lineTo(dropX, FLOOR_Y - 4);
+        ctx.lineTo(dropX, floorYAtDrop);
         ctx.stroke();
         ctx.restore();
 
@@ -1450,6 +1559,7 @@
         ctx.restore();
       }
 
+      // 5. 背景金箔礼花
       for (const c of backgroundConfetti) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, c.alpha);
@@ -1460,17 +1570,20 @@
         ctx.restore();
       }
 
+      // 6. 绘制所有物理校徽球体
       for (const b of balls) {
         const uni = UNIVERSITIES[b.level];
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.scale(b.scaleX, b.scaleY);
 
-        if (b.y + b.radius > FLOOR_Y - 10) {
+        // 贴近大圆内壁时的柔和投影
+        const distFromCenter = Math.hypot(b.x - BOWL_CX, b.y - BOWL_CY);
+        if (distFromCenter + b.radius > BOWL_R - 12 && b.y > BOWL_CY) {
           ctx.save();
-          ctx.fillStyle = "rgba(15, 23, 42, 0.16)";
+          ctx.fillStyle = "rgba(15, 23, 42, 0.15)";
           ctx.beginPath();
-          ctx.ellipse(0, b.radius - 2, b.radius * 0.72, 4, 0, 0, Math.PI * 2);
+          ctx.ellipse(0, b.radius - 2, b.radius * 0.68, 4, 0, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
         }
@@ -1491,6 +1604,7 @@
         ctx.restore();
       }
 
+      // 7. 合成冲击波光环
       for (const sw of shockwaves) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, sw.alpha);
@@ -1508,6 +1622,7 @@
         ctx.restore();
       }
 
+      // 8. 星芒与粒子
       for (const p of particles) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, p.alpha);
@@ -1522,6 +1637,7 @@
         ctx.restore();
       }
 
+      // 9. 浮动名校晋升横幅
       for (const ft of floatingTexts) {
         ctx.save();
         ctx.globalAlpha = Math.max(0, ft.alpha);
@@ -1583,16 +1699,22 @@
       jostleCharges--;
       screenShakeMag = 8;
       soundFX.playJostle();
+      // 沿大圆盘施加切向涡旋与向心微跃助推，让校徽沿圆弧滚动碰撞
       for (const b of balls) {
-        b.vx += (Math.random() - 0.5) * 6.5;
-        b.vy -= 2.2 + Math.random() * 2.4;
+        const dx = b.x - BOWL_CX;
+        const dy = b.y - BOWL_CY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const nx = dx / dist;
+        const ny = dy / dist;
+        b.vx += -nx * 2.2 + (Math.random() - 0.5) * 6.2;
+        b.vy += -ny * 2.4 - (1.8 + Math.random() * 2.0);
         b.scaleX = 0.88;
         b.scaleY = 1.12;
       }
       floatingTexts.push({
-        x: W / 2,
-        y: H / 2,
-        text: "🌪 培养皿振荡助推!",
+        x: BOWL_CX,
+        y: BOWL_CY,
+        text: "🌪 圆盘涡旋振荡助推!",
         subText: `剩余 ${jostleCharges} 次`,
         color: "#38bdf8",
         stroke: "#0f172a",
