@@ -859,24 +859,25 @@
         return defaultMeta;
       }
 
-      // 6. 自动爬取指定分区下的所有子文件夹 (兼容本地 HTTP 目录索引、GitHub Git Trees API 递归扫描、GitHub Contents API)
-      function detectGithubRepoInfo() {
-        const host = window.location.hostname;
-        const pathParts = window.location.pathname.split("/").filter(Boolean);
-        let owner = BLOG_CONFIG.github.owner;
-        let repo = BLOG_CONFIG.github.repo;
-
-        if (host.endsWith(".github.io")) {
-          owner = host.replace(".github.io", "");
-          repo = pathParts.length > 0 ? pathParts[0] : (owner + ".github.io");
-        }
-        return { owner: owner, repo: repo, branch: BLOG_CONFIG.github.branch || "main" };
-      }
-
+      // 6. 读取静态 manifest.json 清单（由 GitHub Actions 自动生成，零 API 限流），本地调试时兜底扫描目录索引
       async function crawlSubfoldersAsArticles(sectionKey, sectionData) {
         const folderName = sectionData.folder || sectionKey;
 
-        // 策略 1：优先尝试同源相对路径目录索引（支持本地 python -m http.server / Live Server / Nginx autoindex）
+        // 策略 1：优先读取同源静态 manifest.json（零限流、秒级加载、墙内直连无阻）
+        try {
+          const manifestResp = await fetch("./manifest.json?t=" + Date.now(), { cache: "no-store" });
+          if (manifestResp.ok) {
+            const manifestData = await manifestResp.json();
+            if (manifestData && manifestData.sections && Array.isArray(manifestData.sections[folderName])) {
+              return {
+                source: "已从静态清单 manifest.json 加载 /" + folderName + " 目录",
+                items: manifestData.sections[folderName]
+              };
+            }
+          }
+        } catch (e) {}
+
+        // 策略 2：本地开发服务器兜底（支持 python -m http.server / Live Server / Nginx autoindex）
         try {
           const localResp = await fetch("./" + folderName + "/", { cache: "no-store" });
           if (localResp.ok) {
@@ -930,133 +931,8 @@
           }
         } catch (e) {}
 
-        // 策略 2：通过 GitHub API 获取仓库中 /{folderName} 下的所有子文件夹与 index.html
-        const gh = detectGithubRepoInfo();
-        if (!gh.owner || !gh.repo) {
-          return {
-            source: "未配置 GitHub 仓库信息",
-            items: []
-          };
-        }
-
-        // 2A. 优先使用 Git Trees API (?recursive=1) 一次性精确扫描 /{folderName}/*/index.html 及子目录
-        const branchesToTry = [gh.branch, "HEAD", "main", "master"].filter(function (b, idx, arr) {
-          return b && arr.indexOf(b) === idx;
-        });
-
-        for (let bIdx = 0; bIdx < branchesToTry.length; bIdx++) {
-          const br = branchesToTry[bIdx];
-          const treeUrl = "https://api.github.com/repos/" +
-            encodeURIComponent(gh.owner) + "/" +
-            encodeURIComponent(gh.repo) + "/git/trees/" +
-            encodeURIComponent(br) + "?recursive=1";
-
-          try {
-            const treeResp = await fetch(treeUrl, {
-              headers: { "Accept": "application/vnd.github.v3+json" }
-            });
-            if (treeResp.ok) {
-              const treeData = await treeResp.json();
-              if (treeData && Array.isArray(treeData.tree)) {
-                const prefix = folderName + "/";
-                const foundMap = new Map();
-
-                treeData.tree.forEach(function (node) {
-                  if (!node || !node.path || !node.path.startsWith(prefix)) return;
-                  const rest = node.path.slice(prefix.length);
-                  const parts = rest.split("/").filter(Boolean);
-                  if (parts.length === 0) return;
-
-                  const subName = parts[0];
-                  if (subName.startsWith(".")) return;
-
-                  const isDirectDir = (parts.length === 1 && node.type === "tree");
-                  const isIndexHtml = (parts.length === 2 && parts[1].toLowerCase() === "index.html");
-                  const isDirectHtml = (parts.length === 1 && node.type === "blob" && /\.html?$/i.test(subName) && subName.toLowerCase() !== "index.html");
-
-                  if (isDirectDir || isIndexHtml) {
-                    if (!foundMap.has(subName)) {
-                      const relPath = folderName + "/" + subName;
-                      const rawUrl = "https://raw.githubusercontent.com/" +
-                        encodeURIComponent(gh.owner) + "/" +
-                        encodeURIComponent(gh.repo) + "/" +
-                        encodeURIComponent(br) + "/" + relPath + "/index.html";
-                      foundMap.set(subName, {
-                        name: subName,
-                        path: relPath,
-                        targetUrl: "./" + folderName + "/" + encodeURIComponent(subName) + "/index.html",
-                        rawUrl: rawUrl
-                      });
-                    }
-                  } else if (isDirectHtml && !foundMap.has(subName)) {
-                    const relPath = folderName + "/" + subName;
-                    const rawUrl = "https://raw.githubusercontent.com/" +
-                      encodeURIComponent(gh.owner) + "/" +
-                      encodeURIComponent(gh.repo) + "/" +
-                      encodeURIComponent(br) + "/" + relPath;
-                    foundMap.set(subName, {
-                      name: subName.replace(/\.html?$/i, ""),
-                      path: relPath,
-                      targetUrl: "./" + folderName + "/" + encodeURIComponent(subName),
-                      rawUrl: rawUrl
-                    });
-                  }
-                });
-
-                if (foundMap.size > 0) {
-                  const subList = Array.from(foundMap.values());
-                  const enriched = await Promise.all(subList.map(function (entry) {
-                    return fetchSubpageMeta(entry, entry.rawUrl);
-                  }));
-                  return {
-                    source: "已从 GitHub 仓库 /" + folderName + " 目录自动获取子页面",
-                    items: enriched
-                  };
-                }
-              }
-            }
-          } catch (err) {}
-        }
-
-        // 2B. 兜底使用 Contents API
-        const apiUrl = "https://api.github.com/repos/" +
-          encodeURIComponent(gh.owner) + "/" +
-          encodeURIComponent(gh.repo) + "/contents/" +
-          encodeURIComponent(folderName);
-
-        try {
-          const resp = await fetch(apiUrl, {
-            headers: { "Accept": "application/vnd.github.v3+json" }
-          });
-          if (resp.ok) {
-            const items = await resp.json();
-            if (Array.isArray(items)) {
-              const subDirs = items.filter(function (item) {
-                return item.type === "dir";
-              });
-              const enriched = await Promise.all(subDirs.map(function (dir) {
-                return fetchSubpageMeta({ name: dir.name, path: dir.path, targetUrl: "./" + dir.path + "/index.html" }, null);
-              }));
-              return {
-                source: "已从 GitHub 仓库 /" + folderName + " 目录自动获取子文件夹",
-                items: enriched
-              };
-            }
-          } else if (resp.status === 404) {
-            return {
-              source: "GitHub 仓库 (" + gh.owner + "/" + gh.repo + ") 中尚未推送 /" + folderName + " 文件夹",
-              items: []
-            };
-          }
-        } catch (err) {
-          return {
-            source: "无法连接 GitHub API 读取 /" + folderName + " 目录",
-            items: []
-          };
-        }
-
         return {
-          source: "目录下暂无子文件夹",
+          source: "未找到 manifest.json（请确认已添加 .github/workflows/manifest.yml 并推送）",
           items: []
         };
       }
