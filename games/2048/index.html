@@ -661,7 +661,7 @@
 
       let grid = [];
       let score = 0;
-      let bestScore = Number(localStorage.getItem(STORAGE_KEY_BEST) || 0);
+      let bestScore = (function () { try { return Math.max(0, parseInt(localStorage.getItem(STORAGE_KEY_BEST), 10) || 0); } catch (e) { return 0; } })();
       let movesCount = 0;
       let comboStreak = 0;
       let achievedMilestones = new Set();
@@ -1095,8 +1095,31 @@
         return false;
       }
 
+      function loadBestScore() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_BEST);
+          const parsed = parseInt(raw, 10);
+          return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      function saveBestScore(val) {
+        try {
+          localStorage.setItem(STORAGE_KEY_BEST, String(val));
+        } catch (e) {}
+      }
+
       function updateHud(scoreGained, maxTileIncreased) {
+        if (score > bestScore) {
+          bestScore = score;
+          saveBestScore(bestScore);
+        }
         scoreValueEl.textContent = String(score);
+        if (bestScoreValueEl) {
+          bestScoreValueEl.textContent = String(bestScore);
+        }
         maxTileValueEl.textContent = formatTileLabel(getMaxTile(grid));
         movesCountValueEl.textContent = String(movesCount);
 
@@ -1427,6 +1450,7 @@
       }
 
       function startNewGame() {
+        bestScore = Math.max(bestScore, loadBestScore());
         grid = createEmptyGrid();
         score = 0;
         movesCount = 0;
