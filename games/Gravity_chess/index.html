@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>重力四子棋 | TM_Sharweek</title>
+  <meta name="post-title" content="重力四子棋" />
+  <meta name="description" content="7×6毛玻璃重力四子棋人机对战，内置可拖动调节 Gemini 推理强度（low / medium / high / ultra）的博弈引擎" />
+  <meta name="post-date" content="2026-11-26" />
+  <meta name="post-tags" content="重力四子棋,人机博弈" />
+  <link rel="stylesheet" href="../../style.css?v=20261126d" />
+  <link rel="stylesheet" href="./style.css?v=20261126d" />
+  <style>
+    /* 紧凑一屏双栏布局兜底（与美国方块、2048、无猜扫雷、合成名校完全统一，电脑端一屏免滚动） */
+    .main-stage.game-page-stage { min-height: 100vh; padding: 10px 16px; max-width: 1020px; }
+    .glass-main-frame.game-c4-frame { max-width: 920px; padding: 15px 22px; }
+    .game-top-bar { width: 100%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.72); }
+    .game-title-group, .top-action-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .game-logo-badge { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg,#2563eb,#0ea5e9); color: #fff; font-weight: 800; font-size: 1.08rem; display: flex; align-items: center; justify-content: center; }
+    .game-title-text h1 { font-size: 1.28rem; font-weight: 800; line-height: 1.2; }
+    .hud-stats-row { width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .hud-stat-card { padding: 7px 14px; border-radius: 14px; background: rgba(255,255,255,0.58); border: 1px solid rgba(255,255,255,0.9); display: flex; flex-direction: column; align-items: flex-start; }
+    .hud-stat-label { font-size: 0.72rem; font-weight: 700; color: #475569; }
+    .hud-stat-value { font-family: var(--font-mono, monospace); font-size: 1.22rem; font-weight: 800; color: #0f172a; line-height: 1.2; margin-top: 2px; }
+    .hud-stat-value.accent { color: #2563eb; }
+    .hud-stat-value.is-bumping { animation: hudScoreBump 0.25s cubic-bezier(0.22, 1, 0.36, 1); }
+    @keyframes hudScoreBump { 0% { transform: scale(1); } 45% { transform: scale(1.24); color: #2563eb; } 100% { transform: scale(1); } }
+    .c4-arena { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 264px; gap: 14px; align-items: stretch; }
+    .board-glass-card { position: relative; border-radius: 20px; background: rgba(255,255,255,0.54); border: 1px solid rgba(255,255,255,0.9); padding: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+    #c4Canvas { display: block; max-width: 100%; max-height: calc(100vh - 190px); width: auto; height: auto; border-radius: 16px; cursor: pointer; touch-action: none; }
+    .c4-side-panel { border-radius: 20px; background: rgba(255,255,255,0.52); border: 1px solid rgba(255,255,255,0.88); padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; gap: 9px; }
+    .gemini-effort-card { padding: 10px 12px; border-radius: 15px; background: rgba(255,255,255,0.72); border: 1px solid rgba(255,255,255,0.94); display: flex; flex-direction: column; gap: 7px; }
+    .gemini-card-header { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .gemini-card-title { font-size: 0.72rem; font-weight: 800; color: #334155; letter-spacing: 0.03em; }
+    .gemini-effort-badge { font-family: var(--font-mono, monospace); font-size: 0.68rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.06em; background: rgba(37,99,235,0.14); color: #2563eb; border: 1px solid rgba(37,99,235,0.32); transition: all 0.2s ease; }
+    .gemini-slider-wrap { display: flex; flex-direction: column; gap: 5px; }
+    .gemini-range-input { -webkit-appearance: none; appearance: none; width: 100%; height: 7px; border-radius: 999px; background: linear-gradient(90deg, #38bdf8 0%, #2563eb 33%, #8b5cf6 66%, #ec4899 100%); outline: none; cursor: pointer; }
+    .gemini-range-input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 19px; height: 19px; border-radius: 50%; background: #ffffff; border: 3px solid var(--thumb-color, #2563eb); box-shadow: 0 2px 8px rgba(15,23,42,0.25); cursor: grab; transition: transform 0.15s ease, border-color 0.2s ease; }
+    .gemini-range-input::-webkit-slider-thumb:hover { transform: scale(1.14); }
+    .gemini-stops-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+    .gemini-stop-btn { appearance: none; border: 1px solid transparent; background: rgba(241,245,249,0.65); font-family: var(--font-mono, monospace); font-size: 0.63rem; font-weight: 700; color: #64748b; padding: 3px 2px; border-radius: 7px; cursor: pointer; transition: all 0.15s ease; }
+    .gemini-stop-btn.is-active { color: #0f172a; font-weight: 800; background: #ffffff; border-color: rgba(37,99,235,0.35); box-shadow: 0 2px 6px rgba(15,23,42,0.08); }
+    .gemini-telemetry-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+    .gemini-metric-box { padding: 6px 8px; border-radius: 10px; background: rgba(248,250,252,0.82); border: 1px solid rgba(148,163,184,0.22); display: flex; flex-direction: column; gap: 1px; }
+    .gemini-metric-label { font-size: 0.61rem; font-weight: 700; color: #64748b; }
+    .gemini-metric-val { font-family: var(--font-mono, monospace); font-size: 0.78rem; font-weight: 800; color: #0f172a; }
+    .c4-eval-bar-track { width: 100%; height: 8px; border-radius: 999px; background: rgba(245,158,11,0.35); overflow: hidden; border: 1px solid rgba(15,23,42,0.12); }
+    .c4-eval-fill { height: 100%; width: 50%; background: linear-gradient(90deg, #2563eb, #38bdf8); transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1); }
+    .gameover-overlay { position: absolute; inset: 10px; border-radius: 18px; background: rgba(255,255,255,0.88); backdrop-filter: blur(14px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px; text-align: center; opacity: 0; visibility: hidden; transition: all 0.28s ease; z-index: 40; }
+    .gameover-overlay.is-visible { opacity: 1; visibility: visible; }
+    @media (min-width: 641px) and (min-height: 580px) { html, body { height: 100vh; overflow: hidden; } .main-stage.game-page-stage { height: 100vh; } }
+    @media (max-width: 720px) { .hud-stats-row { grid-template-columns: repeat(2, 1fr); } .c4-arena { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <main class="main-stage game-page-stage">
+    <div class="glass-main-frame game-page-frame game-c4-frame">
+      <!-- 1. 顶部操作栏 -->
+      <header class="game-top-bar">
+        <div class="game-title-group">
+          <div class="game-logo-badge">🔴</div>
+          <div class="game-title-text">
+            <h1>重力四子棋</h1>
+          </div>
+        </div>
+
+        <div class="top-action-group">
+          <button type="button" id="firstTurnBtn" class="back-home-btn" title="切换玩家先手或 AI 先手">
+            🔵 玩家先手
+          </button>
+          <button type="button" id="hintMoveBtn" class="back-home-btn" title="让 Gemini 引擎为你推演当前最佳落子列 (快捷键: H)">
+            💡 提示 (H)
+          </button>
+          <button type="button" id="undoMoveBtn" class="back-home-btn" disabled title="悔棋撤回一回合 (快捷键: Z)">
+            ↶ 悔棋 (Z)
+          </button>
+          <button type="button" id="randomBgBtn" class="back-home-btn" title="按设定权重随机切换背景图">
+            🎲 <span id="currentBgLabel">背景</span>
+          </button>
+          <button type="button" id="toggleSoundBtn" class="back-home-btn" title="开关音效 (快捷键: M)">
+            🔊 音效
+          </button>
+          <button type="button" id="restartGameBtn" class="back-home-btn" title="重新开始新对局 (快捷键: R)">
+            ↻ 重开 (R)
+          </button>
+          <a href="../../index.html" id="backBlogHomeBtn" class="back-home-btn is-primary">
+            ← 返回主页
+          </a>
+        </div>
+      </header>
+
+      <!-- 2. 四项计分与统计数据栏（localStorage 自动持久化最高积分） -->
+      <section class="hud-stats-row" aria-label="游戏计分面板">
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">当前积分 / SCORE</span>
+          <span id="scoreValueEl" class="hud-stat-value accent">0</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">最高纪录 / BEST</span>
+          <span id="bestScoreValueEl" class="hud-stat-value">0</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">胜场战绩 / WINS</span>
+          <span id="winRecordValueEl" class="hud-stat-value">0 胜 0 负</span>
+        </div>
+        <div class="hud-stat-card">
+          <span class="hud-stat-label">当前连胜 / STREAK</span>
+          <span id="streakValueEl" class="hud-stat-value">0</span>
+        </div>
+      </section>
+
+      <!-- 3. 左侧 7×6 重力四子棋主画布 + 右侧 Gemini Reasoning Effort 推理强度控制台 -->
+      <section class="c4-arena" aria-label="重力四子棋棋盘与AI推理强度控制区">
+        <div class="board-glass-card">
+          <canvas id="c4Canvas" width="504" height="440" aria-label="7列6行重力四子棋交互棋盘"></canvas>
+
+          <div id="gameOverOverlay" class="gameover-overlay" role="dialog" aria-modal="true">
+            <h2 id="gameOverTitle">对局结束</h2>
+            <p id="gameOverSummary"></p>
+            <button type="button" id="overlayRestartBtn" class="back-home-btn is-primary" style="padding: 9px 22px; font-size: 0.9rem;">
+              ↻ 再战一局
+            </button>
+          </div>
+        </div>
+
+        <aside class="c4-side-panel" aria-label="Gemini 推理强度与搜索遥测面板">
+          <!-- Gemini Reasoning Effort 拖动调整条卡片 -->
+          <div class="gemini-effort-card">
+            <div class="gemini-card-header">
+              <span class="gemini-card-title">🧠 REASONING EFFORT</span>
+              <span id="effortBadgeEl" class="gemini-effort-badge">HIGH</span>
+            </div>
+
+            <div class="gemini-slider-wrap">
+              <input
+                type="range"
+                id="effortSliderEl"
+                class="gemini-range-input"
+                min="0"
+                max="3"
+                step="1"
+                value="2"
+                aria-label="拖动调整 AI 推理程度 (low / medium / high / ultra)"
+              />
+              <div class="gemini-stops-row">
+                <button type="button" class="gemini-stop-btn" data-effort-idx="0">low</button>
+                <button type="button" class="gemini-stop-btn" data-effort-idx="1">medium</button>
+                <button type="button" class="gemini-stop-btn is-active" data-effort-idx="2">high</button>
+                <button type="button" class="gemini-stop-btn" data-effort-idx="3">ultra</button>
+              </div>
+            </div>
+
+            <div id="effortDescEl" style="font-size: 0.7rem; color: #475569; line-height: 1.45;">
+              深度 8 层 Alpha-Beta 剪枝 + 置换表 + 杀手启发式，兼顾战术陷阱与中盘控场。
+            </div>
+          </div>
+
+          <!-- 实时博弈推理遥测数据 (Telemetry) -->
+          <div class="gemini-effort-card">
+            <div class="gemini-card-header">
+              <span class="gemini-card-title">⚡ GEMINI SEARCH TELEMETRY</span>
+              <span id="aiStatePillEl" style="font-family:var(--font-mono,monospace);font-size:0.65rem;font-weight:700;color:#10b981;">READY</span>
+            </div>
+
+            <div class="gemini-telemetry-grid">
+              <div class="gemini-metric-box">
+                <span class="gemini-metric-label">搜索深度 / DEPTH</span>
+                <span id="teleDepthEl" class="gemini-metric-val">d = 8</span>
+              </div>
+              <div class="gemini-metric-box">
+                <span class="gemini-metric-label">推理节点 / NODES</span>
+                <span id="teleNodesEl" class="gemini-metric-val">0</span>
+              </div>
+              <div class="gemini-metric-box">
+                <span class="gemini-metric-label">思考耗时 / TIME</span>
+                <span id="teleTimeEl" class="gemini-metric-val">0 ms</span>
+              </div>
+              <div class="gemini-metric-box">
+                <span class="gemini-metric-label">局面评估 / EVAL</span>
+                <span id="teleEvalEl" class="gemini-metric-val">+0.0</span>
+              </div>
+            </div>
+
+            <div class="c4-eval-bar-wrap" style="margin-top: 2px;">
+              <div style="display:flex;justify-content:space-between;font-size:0.62rem;font-weight:700;color:#64748b;">
+                <span>🔵 玩家胜率</span>
+                <span id="winProbTextEl">50% : 50%</span>
+                <span>🟠 Gemini AI</span>
+              </div>
+              <div class="c4-eval-bar-track">
+                <div id="evalBarFillEl" class="c4-eval-fill"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 主线预测 PV 与走子状态卡片 -->
+          <div class="gemini-effort-card" style="gap: 4px;">
+            <div class="gemini-card-header">
+              <span class="gemini-card-title">📡 PRINCIPAL VARIATION</span>
+              <span id="turnIndicatorEl" style="font-size:0.68rem;font-weight:800;color:#2563eb;">🔵 轮到玩家</span>
+            </div>
+            <div id="pvLineEl" style="font-family:var(--font-mono,monospace);font-size:0.7rem;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              等待落子（点击 1~7 列或按数字键 1-7）
+            </div>
+          </div>
+        </aside>
+      </section>
+    </div>
+  </main>
+
+  <div id="toastNotice" class="toast-notice" role="status" aria-live="polite"></div>
+
+  <script>
+    const BLOG_CONFIG = {
+      backgrounds: [
+        { name: "阿绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/t55ghywt.png", weight: 13 },
+        { name: "二重变革", url: "https://cdn.luogu.com.cn/upload/image_hosting/5c26cnb1.png", weight: 3 },
+        { name: "月巷", url: "https://cdn.luogu.com.cn/upload/image_hosting/hjqw3cv3.png", weight: 1 },
+        { name: "九重现实", url: "https://cdn.luogu.com.cn/upload/image_hosting/9qdrt0hk.png", weight: 1 },
+        { name: "傲娇绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/cuna6iak.png", weight: 1 },
+        { name: "五重空洞", url: "https://cdn.luogu.com.cn/upload/image_hosting/rpd6v91b.png", weight: 1 },
+        { name: "世末绫", url: "https://cdn.luogu.com.cn/upload/image_hosting/nw1msrkd.png", weight: 1 },
+        { name: "世末歌者", url: "https://cdn.luogu.com.cn/upload/image_hosting/kut13cln.png", weight: 1 },
+        { name: "小焰", url: "https://cdn.luogu.com.cn/upload/image_hosting/s57te7ko.png", weight: 1 },
+        { name: "待我归乡", url: "https://cdn.luogu.com.cn/upload/image_hosting/vgphr83p.png", weight: 1 },
+        { name: "遗忘的物语", url: "https://cdn.luogu.com.cn/upload/image_hosting/ksdftve2.png", weight: 1 },
+        { name: "病房组", url: "https://cdn.luogu.com.cn/upload/image_hosting/a4j7q31r.png", weight: 1 }
+      ],
+
+      live2d: {
+        enabled: true,
+        engine: "oml2d",
+        scriptUrl: "https://cdn.jsdelivr.net/npm/live2d-widget@3.1.4/lib/L2Dwidget.min.js",
+        oml2dScriptUrl: "https://cdn.jsdelivr.net/npm/oh-my-live2d@latest/dist/index.min.js",
+        modelJsonUrl: "../../102800/model.model3.json",
+        display: {
+          position: "right",
+          width: 280,
+          height: 300,
+          boxHeight: 300,
+          upperZoom: 2.25,
+          anchorY: "0%",
+          shiftX: "10px",
+          shiftY: "20px",
+          hOffset: 12,
+          vOffset: 0,
+          scale: 1
+        },
+        mobile: { show: true, scale: 0.6 },
+        react: { opacityDefault: 0.95, opacityOnHover: 1 }
+      }
+    };
+
+    (function initConnectFourGame() {
+      const ROWS = 6;
+      const COLS = 7;
+      const EMPTY = 0;
+      const HUMAN = 1; // 宝石蓝棋子
+      const AI = 2;    // 琥珀金橙棋子
+
+      // localStorage 存档键（保持与其它迷你游戏一致的纯 localStorage 持久化）
+      const STORAGE_KEY_BEST = "tm_sharweek_connect4_best_v1";
+      const STORAGE_KEY_STATS = "tm_sharweek_connect4_stats_v1";
+
+      /* ==========================================================================
+         Gemini Reasoning Effort 四档推理强度定义 (low / medium / high / ultra)
+         ========================================================================== */
+      const GEMINI_EFFORT_LEVELS = [
+        {
+          id: "low",
+          label: "low",
+          depth: 3,
+          timeBudgetMs: 45,
+          noise: 24,
+          scoreMultiplier: 100,
+          color: "#0ea5e9",
+          bg: "rgba(14, 165, 233, 0.14)",
+          border: "rgba(14, 165, 233, 0.36)",
+          desc: "快速直觉推理（深度 3 层 + 轻微随机扰动），适合轻松休闲对局。"
+        },
+        {
+          id: "medium",
+          label: "medium",
+          depth: 5,
+          timeBudgetMs: 120,
+          noise: 6,
+          scoreMultiplier: 220,
+          color: "#2563eb",
+          bg: "rgba(37, 99, 235, 0.14)",
+          border: "rgba(37, 99, 235, 0.36)",
+          desc: "均衡战术推理（深度 5 层 Alpha-Beta 剪枝），能敏锐封堵双活三与常见斜线杀招。"
+        },
+        {
+          id: "high",
+          label: "high",
+          depth: 8,
+          timeBudgetMs: 320,
+          noise: 0,
+          scoreMultiplier: 420,
+          color: "#7c3aed",
+          bg: "rgba(124, 58, 237, 0.15)",
+          border: "rgba(124, 58, 237, 0.38)",
+          desc: "深度 8 层 Alpha-Beta 剪枝 + 置换表 + 杀手启发式，兼顾战术陷阱与中盘控场。"
+        },
+        {
+          id: "ultra",
+          label: "ultra",
+          depth: 11,
+          timeBudgetMs: 750,
+          noise: 0,
+          scoreMultiplier: 800,
+          color: "#db2777",
+          bg: "rgba(219, 39, 119, 0.16)",
+          border: "rgba(219, 39, 119, 0.42)",
+          desc: "极限算力全开（迭代加深至 11~13 层 + 奇偶行必胜威胁分析 + 置换表满负荷推演）。"
+        }
+      ];
+
+      // 中心列优先搜索顺序 [3, 2, 4, 1, 5, 0, 6] 大幅加速 Alpha-Beta 剪枝
+      const CENTER_ORDER = [3, 2, 4, 1, 5, 0, 6];
+
+      // 预计算全部 69 个四连窗口坐标，避免搜索时重复遍历二维数组
+      const WIN_WINDOWS = [];
+      // 水平 24 个
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c <= COLS - 4; c++) {
+          WIN_WINDOWS.push([[r, c], [r, c + 1], [r, c + 2], [r, c + 3]]);
+        }
+      }
+      // 垂直 21 个
+      for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r <= ROWS - 4; r++) {
+          WIN_WINDOWS.push([[r, c], [r + 1, c], [r + 2, c], [r + 3, c]]);
+        }
+      }
+      // 正斜 12 个
+      for (let r = 0; r <= ROWS - 4; r++) {
+        for (let c = 0; c <= COLS - 4; c++) {
+          WIN_WINDOWS.push([[r, c], [r + 1, c + 1], [r + 2, c + 2], [r + 3, c + 3]]);
+        }
+      }
+      // 反斜 12 个
+      for (let r = 3; r < ROWS; r++) {
+        for (let c = 0; c <= COLS - 4; c++) {
+          WIN_WINDOWS.push([[r, c], [r - 1, c + 1], [r - 2, c + 2], [r - 3, c + 3]]);
+        }
+      }
+
+      // 固定 Zobrist 哈希表，实现 O(1) 增量局面哈希与置换表查询
+      const ZOBRIST = [];
+      (function initZobrist() {
+        let seed = 0x9e3779b9;
+        function nextRand32() {
+          seed ^= seed << 13;
+          seed ^= seed >>> 17;
+          seed ^= seed << 5;
+          return seed >>> 0;
+        }
+        for (let r = 0; r < ROWS; r++) {
+          ZOBRIST[r] = [];
+          for (let c = 0; c < COLS; c++) {
+            ZOBRIST[r][c] = [0, nextRand32(), nextRand32()];
+          }
+        }
+      })();
+
+      // DOM 引用
+      const canvas = document.getElementById("c4Canvas");
+      const ctx = canvas.getContext("2d");
+      const scoreValueEl = document.getElementById("scoreValueEl");
+      const bestScoreValueEl = document.getElementById("bestScoreValueEl");
+      const winRecordValueEl = document.getElementById("winRecordValueEl");
+      const streakValueEl = document.getElementById("streakValueEl");
+      const effortSliderEl = document.getElementById("effortSliderEl");
+      const effortBadgeEl = document.getElementById("effortBadgeEl");
+      const effortDescEl = document.getElementById("effortDescEl");
+      const teleDepthEl = document.getElementById("teleDepthEl");
+      const teleNodesEl = document.getElementById("teleNodesEl");
+      const teleTimeEl = document.getElementById("teleTimeEl");
+      const teleEvalEl = document.getElementById("teleEvalEl");
+      const winProbTextEl = document.getElementById("winProbTextEl");
+      const evalBarFillEl = document.getElementById("evalBarFillEl");
+      const aiStatePillEl = document.getElementById("aiStatePillEl");
+      const turnIndicatorEl = document.getElementById("turnIndicatorEl");
+      const pvLineEl = document.getElementById("pvLineEl");
+      const firstTurnBtn = document.getElementById("firstTurnBtn");
+      const hintMoveBtn = document.getElementById("hintMoveBtn");
+      const undoMoveBtn = document.getElementById("undoMoveBtn");
+      const restartGameBtn = document.getElementById("restartGameBtn");
+      const overlayRestartBtn = document.getElementById("overlayRestartBtn");
+      const toggleSoundBtn = document.getElementById("toggleSoundBtn");
+      const gameOverOverlay = document.getElementById("gameOverOverlay");
+      const gameOverTitle = document.getElementById("gameOverTitle");
+      const gameOverSummary = document.getElementById("gameOverSummary");
+      const toastNotice = document.getElementById("toastNotice");
+
+      // 棋盘几何布局常数
+      const W = canvas.width;   // 504
+      const H = canvas.height;  // 440
+      const CELL = 64;
+      const BOARD_W = COLS * CELL; // 448
+      const BOARD_H = ROWS * CELL; // 384
+      const BOARD_X = (W - BOARD_W) / 2; // 28
+      const BOARD_Y = 44;
+      const DISC_R = 25;
+
+      // 游戏状态
+      let board = [];
+      let moveHistory = []; // [{ r, c, player }]
+      let currentTurn = HUMAN;
+      let humanGoesFirst = true;
+      let isGameOver = false;
+      let isAiThinking = false;
+      let winningLine = null; // [[r,c], ...]
+      let hoverCol = 3;
+      let hintCol = null;
+      let currentEffortIdx = 2; // 默认 high
+
+      // 计分与战绩存档
+      let currentScore = 0;
+      let bestScore = 0;
+      let stats = { wins: 0, losses: 0, streak: 0 };
+
+      // 动画队列（重力下落棋子 + 粒子 + 光环）
+      let fallingDiscs = []; // { r, c, player, y, targetY, vy, bounces }
+      let particles = [];
+      let shockwaves = [];
+      let animLoopRunning = false;
+      let soundEnabled = true;
+      let audioCtx = null;
+      let toastTimer = null;
+
+      function loadSavedData() {
+        try {
+          const b = parseInt(localStorage.getItem(STORAGE_KEY_BEST), 10);
+          bestScore = Number.isFinite(b) && b > 0 ? b : 0;
+        } catch (e) {
+          bestScore = 0;
+        }
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY_STATS);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === "object") {
+              stats.wins = Number(parsed.wins) || 0;
+              stats.losses = Number(parsed.losses) || 0;
+              stats.streak = Number(parsed.streak) || 0;
+            }
+          }
+        } catch (e) {}
+      }
+
+      function saveBestAndStats() {
+        try {
+          if (currentScore > bestScore) {
+            bestScore = currentScore;
+          }
+          localStorage.setItem(STORAGE_KEY_BEST, String(bestScore));
+          localStorage.setItem(STORAGE_KEY_STATS, JSON.stringify(stats));
+        } catch (e) {}
+      }
+
+      function showToast(msg) {
+        if (!toastNotice) return;
+        toastNotice.textContent = msg;
+        toastNotice.classList.add("is-visible");
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () {
+          toastNotice.classList.remove("is-visible");
+        }, 2200);
+      }
+
+      function bumpHud(el) {
+        if (!el) return;
+        el.classList.remove("is-bumping");
+        void el.offsetWidth;
+        el.classList.add("is-bumping");
+      }
+
+      function updateHud(animateScore) {
+        if (currentScore > bestScore) {
+          bestScore = currentScore;
+          saveBestAndStats();
+          bumpHud(bestScoreValueEl);
+        }
+        scoreValueEl.textContent = currentScore.toLocaleString();
+        if (animateScore) bumpHud(scoreValueEl);
+        bestScoreValueEl.textContent = bestScore.toLocaleString();
+        winRecordValueEl.textContent = stats.wins + " 胜 " + stats.losses + " 负";
+        streakValueEl.textContent = String(stats.streak);
+        undoMoveBtn.disabled = isAiThinking || moveHistory.length === 0;
+      }
+
+      /* ==========================================================================
+         Web Audio 重力落子与四连音效
+         ========================================================================== */
+      function playTone(freq, dur, type, gainVal, delaySec) {
+        if (!soundEnabled) return;
+        try {
+          if (!audioCtx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            audioCtx = new AudioCtx();
+          }
+          if (audioCtx.state === "suspended") audioCtx.resume();
+          const now = audioCtx.currentTime + (delaySec || 0);
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type || "sine";
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(gainVal || 0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now);
+          osc.stop(now + dur);
+        } catch (e) {}
+      }
+
+      function sfxDropBounce(isHuman, bounceIdx) {
+        const base = isHuman ? 320 : 250;
+        playTone(base + bounceIdx * 55, 0.06, "triangle", 0.09 / (bounceIdx + 1), 0);
+      }
+
+      function sfxWin(didHumanWin) {
+        const notes = didHumanWin ? [523.25, 659.25, 783.99, 1046.5] : [392.0, 349.23, 311.13, 261.63];
+        notes.forEach(function (n, idx) {
+          playTone(n, 0.2, "triangle", 0.12, idx * 0.07);
+        });
+      }
+
+      /* ==========================================================================
+         Gemini Reasoning Effort 拖动条切换逻辑
+         ========================================================================== */
+      function setReasoningEffort(idx, notify) {
+        const clamped = Math.max(0, Math.min(GEMINI_EFFORT_LEVELS.length - 1, Number(idx) || 0));
+        currentEffortIdx = clamped;
+        const cfg = GEMINI_EFFORT_LEVELS[clamped];
+
+        effortSliderEl.value = String(clamped);
+        effortSliderEl.style.setProperty("--thumb-color", cfg.color);
+        effortBadgeEl.textContent = cfg.label.toUpperCase();
+        effortBadgeEl.style.color = cfg.color;
+        effortBadgeEl.style.background = cfg.bg;
+        effortBadgeEl.style.borderColor = cfg.border;
+        effortDescEl.textContent = cfg.desc;
+        teleDepthEl.textContent = "d = " + cfg.depth;
+
+        document.querySelectorAll(".gemini-stop-btn").forEach(function (btn) {
+          const bIdx = Number(btn.getAttribute("data-effort-idx"));
+          btn.classList.toggle("is-active", bIdx === clamped);
+        });
+
+        if (notify) {
+          showToast("🧠 Gemini 推理强度已设为：" + cfg.label.toUpperCase() + " (深度 " + cfg.depth + " 层)");
+        }
+      }
+
+      effortSliderEl.addEventListener("input", function (e) {
+        setReasoningEffort(e.target.value, true);
+      });
+
+      document.querySelectorAll(".gemini-stop-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          setReasoningEffort(btn.getAttribute("data-effort-idx"), true);
+        });
+      });
+
+      /* ==========================================================================
+         棋盘基础辅助函数
+         ========================================================================== */
+      function createEmptyBoard() {
+        const b = [];
+        for (let r = 0; r < ROWS; r++) {
+          b.push(new Array(COLS).fill(EMPTY));
+        }
+        return b;
+      }
+
+      function getAvailableRow(b, col) {
+        if (col < 0 || col >= COLS) return -1;
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (b[r][col] === EMPTY) return r;
+        }
+        return -1;
+      }
+
+      function findWinningLine(b) {
+        for (let i = 0; i < WIN_WINDOWS.length; i++) {
+          const w = WIN_WINDOWS[i];
+          const p = b[w[0][0]][w[0][1]];
+          if (
+            p !== EMPTY &&
+            p === b[w[1][0]][w[1][1]] &&
+            p === b[w[2][0]][w[2][1]] &&
+            p === b[w[3][0]][w[3][1]]
+          ) {
+            return { player: p, cells: w };
+          }
+        }
+        return null;
+      }
+
+      function isBoardFull(b) {
+        for (let c = 0; c < COLS; c++) {
+          if (b[0][c] === EMPTY) return false;
+        }
+        return true;
+      }
+
+      /* ==========================================================================
+         Gemini 博弈推理引擎 (Iterative Deepening Negamax + Alpha-Beta + TT + Odd/Even Threat)
+         ========================================================================== */
+      function evaluateBoardForAI(b, effortId) {
+        let score = 0;
+        const useThreatParity = (effortId === "high" || effortId === "ultra");
+
+        // 1. 中心列控制加分（重力四子棋中心列可参与最多四连组合）
+        const colWeights = [3, 4, 6, 9, 6, 4, 3];
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            if (b[r][c] === AI) score += colWeights[c];
+            else if (b[r][c] === HUMAN) score -= colWeights[c];
+          }
+        }
+
+        // 2. 69 个四连窗口形态与重力悬空威胁评估
+        for (let i = 0; i < WIN_WINDOWS.length; i++) {
+          const w = WIN_WINDOWS[i];
+          let aiCnt = 0;
+          let huCnt = 0;
+          let emptyCell = null;
+
+          for (let k = 0; k < 4; k++) {
+            const cellVal = b[w[k][0]][w[k][1]];
+            if (cellVal === AI) aiCnt++;
+            else if (cellVal === HUMAN) huCnt++;
+            else emptyCell = w[k];
+          }
+
+          if (aiCnt > 0 && huCnt > 0) continue; // 双方混杂窗口无成四可能
+
+          if (aiCnt === 4) return 100000;
+          if (huCnt === 4) return -100000;
+
+          if (aiCnt === 3 && emptyCell) {
+            const er = emptyCell[0];
+            const ec = emptyCell[1];
+            const ImmediatelyPlayable = (er === ROWS - 1 || b[er + 1][ec] !== EMPTY);
+            if (ImmediatelyPlayable) {
+              score += 135;
+            } else {
+              // 结合奇偶行控制理论（重力四子棋先手奇行威胁、后手偶行威胁更具杀伤力）
+              const parityBonus = (useThreatParity && (er % 2 === 0)) ? 32 : 0;
+              score += 68 + parityBonus;
+            }
+          } else if (huCnt === 3 && emptyCell) {
+            const er = emptyCell[0];
+            const ec = emptyCell[1];
+            const ImmediatelyPlayable = (er === ROWS - 1 || b[er + 1][ec] !== EMPTY);
+            if (ImmediatelyPlayable) {
+              score -= 145;
+            } else {
+              const parityBonus = (useThreatParity && (er % 2 === 1)) ? 35 : 0;
+              score -= (74 + parityBonus);
+            }
+          } else if (aiCnt === 2) {
+            score += 11;
+          } else if (huCnt === 2) {
+            score -= 12;
+          }
+        }
+
+        return score;
+      }
+
+      function computeGeminiBestMove(b, playerToMove, effortCfg) {
+        const startTs = performance.now();
+        const maxDepth = effortCfg.depth;
+        const timeLimit = effortCfg.timeBudgetMs;
+        let nodesVisited = 0;
+
+        // 0. 检查所有合法落子列
+        const validCols = [];
+        for (let i = 0; i < CENTER_ORDER.length; i++) {
+          const c = CENTER_ORDER[i];
+          if (getAvailableRow(b, c) !== -1) validCols.push(c);
+        }
+        if (validCols.length === 0) {
+          return { col: -1, score: 0, depthReached: 0, nodes: 0, elapsedMs: 0, pv: [] };
+        }
+        if (validCols.length === 1) {
+          return { col: validCols[0], score: 0, depthReached: 1, nodes: 1, elapsedMs: 1, pv: [validCols[0]] };
+        }
+
+        // 1. 一步绝杀直判（自己能一步连四则立即落下）
+        for (let i = 0; i < validCols.length; i++) {
+          const c = validCols[i];
+          const r = getAvailableRow(b, c);
+          b[r][c] = playerToMove;
+          const win = findWinningLine(b);
+          b[r][c] = EMPTY;
+          if (win && win.player === playerToMove) {
+            return {
+              col: c,
+              score: 99999,
+              depthReached: 1,
+              nodes: validCols.length,
+              elapsedMs: Math.max(1, Math.round(performance.now() - startTs)),
+              pv: [c]
+            };
+          }
+        }
+
+        // 2. 一步必防直判（对手下一步能连四则必须立刻堵截）
+        const opp = playerToMove === AI ? HUMAN : AI;
+        for (let i = 0; i < validCols.length; i++) {
+          const c = validCols[i];
+          const r = getAvailableRow(b, c);
+          b[r][c] = opp;
+          const win = findWinningLine(b);
+          b[r][c] = EMPTY;
+          if (win && win.player === opp) {
+            return {
+              col: c,
+              score: -500,
+              depthReached: 2,
+              nodes: validCols.length * 2,
+              elapsedMs: Math.max(1, Math.round(performance.now() - startTs)),
+              pv: [c]
+            };
+          }
+        }
+
+        // 计算初始 Zobrist Hash
+        let rootHash = 0;
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            if (b[r][c] !== EMPTY) {
+              rootHash = (rootHash ^ ZOBRIST[r][c][b[r][c]]) >>> 0;
+            }
+          }
+        }
+
+        const tt = new Map(); // hash -> { depth, flag, score, bestCol }
+        const EXACT = 0, LOWER = 1, UPPER = 2;
+        let timeAborted = false;
+
+        function negamax(depth, alpha, beta, side, hash, ply) {
+          nodesVisited++;
+          if ((nodesVisited & 511) === 0 && (performance.now() - startTs) > timeLimit) {
+            timeAborted = true;
+            return 0;
+          }
+
+          const alphaOrig = alpha;
+          const ttKey = hash + "_" + side;
+          const ttEntry = tt.get(ttKey);
+          if (ttEntry && ttEntry.depth >= depth) {
+            if (ttEntry.flag === EXACT) return ttEntry.score;
+            if (ttEntry.flag === LOWER && ttEntry.score > alpha) alpha = ttEntry.score;
+            else if (ttEntry.flag === UPPER && ttEntry.score < beta) beta = ttEntry.score;
+            if (alpha >= beta) return ttEntry.score;
+          }
+
+          const winCheck = findWinningLine(b);
+          if (winCheck) {
+            return winCheck.player === side ? (90000 - ply * 100) : (-90000 + ply * 100);
+          }
+          if (isBoardFull(b)) return 0;
+
+          if (depth <= 0) {
+            const rawEval = evaluateBoardForAI(b, effortCfg.id);
+            return side === AI ? rawEval : -rawEval;
+          }
+
+          // 走子排序：置换表最佳手优先，其次中心列优先
+          const orderedCols = [];
+          if (ttEntry && typeof ttEntry.bestCol === "number" && getAvailableRow(b, ttEntry.bestCol) !== -1) {
+            orderedCols.push(ttEntry.bestCol);
+          }
+          for (let i = 0; i < CENTER_ORDER.length; i++) {
+            const c = CENTER_ORDER[i];
+            if (c !== (ttEntry && ttEntry.bestCol) && getAvailableRow(b, c) !== -1) {
+              orderedCols.push(c);
+            }
+          }
+
+          let bestVal = -Infinity;
+          let bestCol = orderedCols[0];
+          const nextSide = side === AI ? HUMAN : AI;
+
+          for (let i = 0; i < orderedCols.length; i++) {
+            const c = orderedCols[i];
+            const r = getAvailableRow(b, c);
+            b[r][c] = side;
+            const nextHash = (hash ^ ZOBRIST[r][c][side]) >>> 0;
+
+            const val = -negamax(depth - 1, -beta, -alpha, nextSide, nextHash, ply + 1);
+            b[r][c] = EMPTY;
+
+            if (timeAborted) return 0;
+
+            if (val > bestVal) {
+              bestVal = val;
+              bestCol = c;
+            }
+            if (val > alpha) alpha = val;
+            if (alpha >= beta) break;
+          }
+
+          if (!timeAborted && tt.size < 45000) {
+            let flag = EXACT;
+            if (bestVal <= alphaOrig) flag = UPPER;
+            else if (bestVal >= beta) flag = LOWER;
+            tt.set(ttKey, { depth: depth, flag: flag, score: bestVal, bestCol: bestCol });
+          }
+
+          return bestVal;
+        }
+
+        let chosenCol = validCols[0];
+        let chosenScore = 0;
+        let completedDepth = 1;
+
+        // 迭代加深搜索 (Iterative Deepening)
+        for (let d = 2; d <= maxDepth; d++) {
+          timeAborted = false;
+          let iterBestCol = chosenCol;
+          let iterBestScore = -Infinity;
+
+          // 根节点将上一层最佳列排在第一位
+          const rootCols = [chosenCol];
+          for (let i = 0; i < validCols.length; i++) {
+            if (validCols[i] !== chosenCol) rootCols.push(validCols[i]);
+          }
+
+          for (let i = 0; i < rootCols.length; i++) {
+            const c = rootCols[i];
+            const r = getAvailableRow(b, c);
+            b[r][c] = playerToMove;
+            const nextHash = (rootHash ^ ZOBRIST[r][c][playerToMove]) >>> 0;
+            const nextSide = playerToMove === AI ? HUMAN : AI;
+
+            let val = -negamax(d - 1, -100000, 100000, nextSide, nextHash, 1);
+            b[r][c] = EMPTY;
+
+            if (timeAborted) break;
+
+            if (effortCfg.noise > 0) {
+              val += (Math.random() - 0.5) * effortCfg.noise;
+            }
+
+            if (val > iterBestScore) {
+              iterBestScore = val;
+              iterBestCol = c;
+            }
+          }
+
+          if (!timeAborted) {
+            chosenCol = iterBestCol;
+            chosenScore = iterBestScore;
+            completedDepth = d;
+            // 若已找到必胜杀棋则提前终止加深
+            if (Math.abs(chosenScore) > 80000) break;
+          } else {
+            break;
+          }
+        }
+
+        // 提取 4 步主变例 (Principal Variation)
+        const pv = [];
+        const tempMoves = [];
+        let pvSide = playerToMove;
+        let pvHash = rootHash;
+        for (let step = 0; step < 5; step++) {
+          const c = step === 0 ? chosenCol : (tt.get(pvHash + "_" + pvSide) || {}).bestCol;
+          if (typeof c !== "number") break;
+          const r = getAvailableRow(b, c);
+          if (r === -1) break;
+          pv.push(c);
+          b[r][c] = pvSide;
+          tempMoves.push([r, c]);
+          pvHash = (pvHash ^ ZOBRIST[r][c][pvSide]) >>> 0;
+          pvSide = pvSide === AI ? HUMAN : AI;
+        }
+        for (let i = tempMoves.length - 1; i >= 0; i--) {
+          b[tempMoves[i][0]][tempMoves[i][1]] = EMPTY;
+        }
+
+        const elapsedMs = Math.max(1, Math.round(performance.now() - startTs));
+        return {
+          col: chosenCol,
+          score: chosenScore,
+          depthReached: completedDepth,
+          nodes: nodesVisited,
+          elapsedMs: elapsedMs,
+          pv: pv
+        };
+      }
+
+      /* ==========================================================================
+         更新右侧 Gemini 遥测面板与胜率评估条
+         ========================================================================== */
+      function updateTelemetryUI(res, forPlayer) {
+        if (!res) return;
+        teleDepthEl.textContent = "d = " + res.depthReached;
+        teleNodesEl.textContent = res.nodes.toLocaleString();
+        teleTimeEl.textContent = res.elapsedMs + " ms";
+
+        // 换算为以玩家视角为正、AI 视角为负的评估分
+        const aiPerspectiveScore = forPlayer === AI ? res.score : -res.score;
+        const normScore = Math.max(-999, Math.min(999, Math.round(aiPerspectiveScore) / 10));
+        const sign = normScore > 0 ? "+" : "";
+        teleEvalEl.textContent = sign + normScore.toFixed(1);
+        teleEvalEl.style.color = normScore > 8 ? "#d97706" : (normScore < -8 ? "#2563eb" : "#0f172a");
+
+        // Sigmoid 转换玩家与 AI 胜率条
+        const aiProb = 1 / (1 + Math.exp(-aiPerspectiveScore / 160));
+        const humanPct = Math.round((1 - aiProb) * 100);
+        const aiPct = 100 - humanPct;
+        winProbTextEl.textContent = humanPct + "% : " + aiPct + "%";
+        evalBarFillEl.style.width = humanPct + "%";
+
+        if (res.pv && res.pv.length > 0) {
+          const pvStr = res.pv.map(function (c, idx) {
+            const tag = ((forPlayer === AI && idx % 2 === 0) || (forPlayer === HUMAN && idx % 2 === 1)) ? "AI" : "P";
+            return tag + ":C" + (c + 1);
+          }).join(" → ");
+          pvLineEl.textContent = "PV: " + pvStr;
+        }
+      }
+
+      /* ==========================================================================
+         落子与重力物理弹跳动画
+         ========================================================================== */
+      function cellCenterXY(r, c) {
+        return {
+          x: BOARD_X + c * CELL + CELL / 2,
+          y: BOARD_Y + r * CELL + CELL / 2
+        };
+      }
+
+      function spawnWinEffects(cells, winner) {
+        const col = winner === HUMAN ? "#38bdf8" : "#f59e0b";
+        cells.forEach(function (pair) {
+          const pos = cellCenterXY(pair[0], pair[1]);
+          shockwaves.push({
+            x: pos.x,
+            y: pos.y,
+            r: 10,
+            maxR: 52,
+            color: col,
+            alpha: 0.95
+          });
+          for (let i = 0; i < 10; i++) {
+            const ang = (Math.PI * 2 * i) / 10;
+            const spd = 1.6 + Math.random() * 2.4;
+            particles.push({
+              x: pos.x,
+              y: pos.y,
+              vx: Math.cos(ang) * spd,
+              vy: Math.sin(ang) * spd - 0.5,
+              size: 3 + Math.random() * 2.5,
+              color: i % 2 === 0 ? col : "#ffffff",
+              alpha: 1
+            });
+          }
+        });
+        ensureAnimLoop();
+      }
+
+      function dropDiscInColumn(col, player) {
+        if (isGameOver) return false;
+        const targetRow = getAvailableRow(board, col);
+        if (targetRow === -1) return false;
+
+        hintCol = null;
+        board[targetRow][col] = player;
+        moveHistory.push({ r: targetRow, c: col, player: player });
+
+        const targetPos = cellCenterXY(targetRow, col);
+        fallingDiscs.push({
+          r: targetRow,
+          c: col,
+          player: player,
+          x: targetPos.x,
+          y: BOARD_Y - 22,
+          targetY: targetPos.y,
+          vy: 2.5,
+          bounces: 0
+        });
+        sfxDropBounce(player === HUMAN, 0);
+        ensureAnimLoop();
+
+        // 检查胜负或平局
+        const winInfo = findWinningLine(board);
+        if (winInfo) {
+          isGameOver = true;
+          winningLine = winInfo.cells;
+          const effortCfg = GEMINI_EFFORT_LEVELS[currentEffortIdx];
+
+          if (winInfo.player === HUMAN) {
+            const fastBonus = Math.max(40, (42 - moveHistory.length) * 15);
+            const gained = effortCfg.scoreMultiplier + fastBonus + stats.streak * 60;
+            currentScore += gained;
+            stats.wins += 1;
+            stats.streak += 1;
+            saveBestAndStats();
+            updateHud(true);
+            sfxWin(true);
+            spawnWinEffects(winInfo.cells, HUMAN);
+            turnIndicatorEl.textContent = "🏆 玩家四连获胜！";
+            aiStatePillEl.textContent = "CHECKMATE";
+            gameOverTitle.textContent = "🎉 击败 Gemini (" + effortCfg.label.toUpperCase() + ")！";
+            gameOverSummary.textContent =
+              "本局奖励 +" + gained + " 分 · 当前总分 " + currentScore.toLocaleString() + " · 历史最高 " + bestScore.toLocaleString();
+          } else {
+            stats.losses += 1;
+            stats.streak = 0;
+            saveBestAndStats();
+            updateHud(false);
+            sfxWin(false);
+            spawnWinEffects(winInfo.cells, AI);
+            turnIndicatorEl.textContent = "🟠 Gemini AI 四连获胜";
+            aiStatePillEl.textContent = "AI VICTORY";
+            gameOverTitle.textContent = "Gemini (" + effortCfg.label.toUpperCase() + ") 获胜";
+            gameOverSummary.textContent =
+              "AI 在第 " + moveHistory.length + " 手达成四子连珠 · 可拖动右侧滑条调整推理程度再战";
+          }
+
+          setTimeout(function () {
+            if (isGameOver) gameOverOverlay.classList.add("is-visible");
+          }, 650);
+          return true;
+        }
+
+        if (isBoardFull(board)) {
+          isGameOver = true;
+          currentScore += 80;
+          saveBestAndStats();
+          updateHud(true);
+          turnIndicatorEl.textContent = "🤝 满盘平局";
+          gameOverTitle.textContent = "棋逢对手 · 满盘平局";
+          gameOverSummary.textContent = "42 枚棋子全部落满未分胜负 · 平局奖励 +80 分";
+          setTimeout(function () {
+            if (isGameOver) gameOverOverlay.classList.add("is-visible");
+          }, 500);
+          return true;
+        }
+
+        // 切换回合
+        currentTurn = player === HUMAN ? AI : HUMAN;
+        updateHud(false);
+
+        if (currentTurn === AI) {
+          scheduleAiTurn();
+        } else {
+          turnIndicatorEl.textContent = "🔵 轮到玩家";
+          aiStatePillEl.textContent = "READY";
+          aiStatePillEl.style.color = "#10b981";
+        }
+        return true;
+      }
+
+      function scheduleAiTurn() {
+        if (isGameOver) return;
+        isAiThinking = true;
+        undoMoveBtn.disabled = true;
+        const effortCfg = GEMINI_EFFORT_LEVELS[currentEffortIdx];
+        turnIndicatorEl.textContent = "🟠 Gemini (" + effortCfg.label + ") 思考中...";
+        aiStatePillEl.textContent = "THINKING";
+        aiStatePillEl.style.color = effortCfg.color;
+        renderBoard();
+
+        setTimeout(function () {
+          if (isGameOver) {
+            isAiThinking = false;
+            return;
+          }
+          const copyB = board.map(function (row) { return row.slice(); });
+          const res = computeGeminiBestMove(copyB, AI, effortCfg);
+          isAiThinking = false;
+          updateTelemetryUI(res, AI);
+          if (res.col !== -1) {
+            dropDiscInColumn(res.col, AI);
+          }
+          updateHud(false);
+        }, 140);
+      }
+
+      /* ==========================================================================
+         渲染 7×6 毛玻璃镂空重力四子棋棋盘（空闲时自动休眠动画循环，零卡顿）
+         ========================================================================== */
+      function isFallingAt(r, c) {
+        for (let i = 0; i < fallingDiscs.length; i++) {
+          if (fallingDiscs[i].r === r && fallingDiscs[i].c === c) return true;
+        }
+        return false;
+      }
+
+      function drawDisc(x, y, radius, player, alpha, isHighlight) {
+        ctx.save();
+        ctx.globalAlpha = alpha !== undefined ? alpha : 1;
+
+        const grad = ctx.createRadialGradient(
+          x - radius * 0.32,
+          y - radius * 0.35,
+          radius * 0.12,
+          x,
+          y,
+          radius
+        );
+
+        if (player === HUMAN) {
+          grad.addColorStop(0, "#93c5fd");
+          grad.addColorStop(0.45, "#3b82f6");
+          grad.addColorStop(1, "#1d4ed8");
+        } else {
+          grad.addColorStop(0, "#fef08a");
+          grad.addColorStop(0.45, "#f59e0b");
+          grad.addColorStop(1, "#b45309");
+        }
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // 金属内环压纹
+        ctx.lineWidth = isHighlight ? 3 : 1.8;
+        ctx.strokeStyle = isHighlight
+          ? "#ffffff"
+          : (player === HUMAN ? "rgba(191, 219, 254, 0.85)" : "rgba(254, 240, 138, 0.88)");
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(x, y, radius * 0.66, 0, Math.PI * 2);
+        ctx.lineWidth = 1.2;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.36)";
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function renderBoard() {
+        ctx.clearRect(0, 0, W, H);
+
+        // 1. 顶部待落子悬浮预览棋子与列号指示
+        for (let c = 0; c < COLS; c++) {
+          const cx = BOARD_X + c * CELL + CELL / 2;
+          const isHover = (c === hoverCol && !isGameOver && currentTurn === HUMAN && !isAiThinking);
+          const isHint = (c === hintCol && !isGameOver);
+
+          ctx.save();
+          ctx.font = '800 11px "JetBrains Mono", monospace';
+          ctx.textAlign = "center";
+          ctx.fillStyle = isHover ? "#2563eb" : "#64748b";
+          ctx.fillText("C" + (c + 1), cx, 16);
+          ctx.restore();
+
+          if (isHover && getAvailableRow(board, c) !== -1) {
+            drawDisc(cx, 26, 15, HUMAN, 0.88, false);
+          } else if (isHint && getAvailableRow(board, c) !== -1) {
+            drawDisc(cx, 26, 15, HUMAN, 0.95, true);
+          }
+        }
+
+        // 2. 悬停列浅蓝引力导轨高亮 + 落点幽灵预览
+        if (!isGameOver && currentTurn === HUMAN && !isAiThinking && hoverCol >= 0 && hoverCol < COLS) {
+          const targetRow = getAvailableRow(board, hoverCol);
+          if (targetRow !== -1) {
+            const colX = BOARD_X + hoverCol * CELL;
+            ctx.save();
+            ctx.fillStyle = "rgba(56, 189, 248, 0.12)";
+            ctx.beginPath();
+            ctx.roundRect(colX + 4, BOARD_Y + 4, CELL - 8, BOARD_H - 8, 12);
+            ctx.fill();
+            ctx.restore();
+
+            const ghostPos = cellCenterXY(targetRow, hoverCol);
+            drawDisc(ghostPos.x, ghostPos.y, DISC_R * 0.92, HUMAN, 0.26, false);
+          }
+        }
+
+        // 3. AI 提示最佳列高亮脉冲框
+        if (hintCol !== null && !isGameOver) {
+          const hRow = getAvailableRow(board, hintCol);
+          if (hRow !== -1) {
+            const hPos = cellCenterXY(hRow, hintCol);
+            ctx.save();
+            ctx.setLineDash([5, 4]);
+            ctx.strokeStyle = "#10b981";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(hPos.x, hPos.y, DISC_R + 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // 4. 绘制正在重力下落中的动态棋子
+        for (let i = 0; i < fallingDiscs.length; i++) {
+          const fd = fallingDiscs[i];
+          drawDisc(fd.x, fd.y, DISC_R, fd.player, 1, false);
+        }
+
+        // 5. 绘制已落稳的棋子
+        const winSet = new Set();
+        if (winningLine) {
+          winningLine.forEach(function (pair) {
+            winSet.add(pair[0] + "," + pair[1]);
+          });
+        }
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const p = board[r][c];
+            if (p === EMPTY || isFallingAt(r, c)) continue;
+            const pos = cellCenterXY(r, c);
+            const isWinCell = winSet.has(r + "," + c);
+            drawDisc(pos.x, pos.y, DISC_R, p, 1, isWinCell);
+          }
+        }
+
+        // 6. 绘制毛玻璃镂空前框架面罩（利用 evenodd 奇偶环绕规则镂空 42 个圆孔）
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 18);
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const pos = cellCenterXY(r, c);
+            ctx.moveTo(pos.x + DISC_R, pos.y);
+            ctx.arc(pos.x, pos.y, DISC_R, 0, Math.PI * 2, true);
+          }
+        }
+        const frameGrad = ctx.createLinearGradient(0, BOARD_Y, 0, BOARD_Y + BOARD_H);
+        frameGrad.addColorStop(0, "rgba(226, 232, 240, 0.82)");
+        frameGrad.addColorStop(1, "rgba(203, 213, 225, 0.90)");
+        ctx.fillStyle = frameGrad;
+        ctx.fill("evenodd");
+
+        // 外框高光描边与各孔金属内圈
+        ctx.strokeStyle = "rgba(37, 99, 235, 0.34)";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.roundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 18);
+        ctx.stroke();
+
+        for (let r = 0; r < ROWS; r++) {
+          for (let c = 0; c < COLS; c++) {
+            const pos = cellCenterXY(r, c);
+            ctx.beginPath();
+            ctx.arc(pos.x, pos.y, DISC_R, 0, Math.PI * 2);
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.55)";
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+          }
+        }
+        ctx.restore();
+
+        // 7. 标记最新落子手数圆点
+        if (moveHistory.length > 0 && fallingDiscs.length === 0) {
+          const last = moveHistory[moveHistory.length - 1];
+          const lPos = cellCenterXY(last.r, last.c);
+          ctx.save();
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(lPos.x, lPos.y, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // 8. 绘制四子连珠胜利能量激光连线
+        if (winningLine && winningLine.length === 4 && fallingDiscs.length === 0) {
+          const pStart = cellCenterXY(winningLine[0][0], winningLine[0][1]);
+          const pEnd = cellCenterXY(winningLine[3][0], winningLine[3][1]);
+          ctx.save();
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = 6;
+          ctx.lineCap = "round";
+          ctx.shadowColor = "#38bdf8";
+          ctx.shadowBlur = 14;
+          ctx.beginPath();
+          ctx.moveTo(pStart.x, pStart.y);
+          ctx.lineTo(pEnd.x, pEnd.y);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // 9. 绘制光环与粒子
+        for (let i = 0; i < shockwaves.length; i++) {
+          const sw = shockwaves[i];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, sw.alpha);
+          ctx.strokeStyle = sw.color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      function stepAnimations() {
+        let active = false;
+
+        // 重力加速度下落与底部弹性回弹
+        for (let i = fallingDiscs.length - 1; i >= 0; i--) {
+          const fd = fallingDiscs[i];
+          fd.vy += 1.55;
+          fd.y += fd.vy;
+          if (fd.y >= fd.targetY) {
+            fd.y = fd.targetY;
+            if (Math.abs(fd.vy) > 4.2 && fd.bounces < 2) {
+              fd.vy = -fd.vy * 0.34;
+              fd.bounces += 1;
+              sfxDropBounce(fd.player === HUMAN, fd.bounces);
+            } else {
+              fallingDiscs.splice(i, 1);
+            }
+          }
+          active = true;
+        }
+
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+          const sw = shockwaves[i];
+          sw.r += (sw.maxR - sw.r) * 0.2;
+          sw.alpha -= 0.04;
+          if (sw.alpha <= 0.02) shockwaves.splice(i, 1);
+          else active = true;
+        }
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.alpha -= 0.028;
+          if (p.alpha <= 0.02) particles.splice(i, 1);
+          else active = true;
+        }
+
+        renderBoard();
+
+        if (active || fallingDiscs.length > 0 || shockwaves.length > 0 || particles.length > 0) {
+          requestAnimationFrame(stepAnimations);
+        } else {
+          animLoopRunning = false;
+        }
+      }
+
+      function ensureAnimLoop() {
+        if (!animLoopRunning) {
+          animLoopRunning = true;
+          requestAnimationFrame(stepAnimations);
+        }
+      }
+
+      /* ==========================================================================
+         鼠标与键盘交互控制
+         ========================================================================== */
+      function getColFromEvent(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const cx = (e.clientX - rect.left) * scaleX;
+        const col = Math.floor((cx - BOARD_X) / CELL);
+        return Math.max(0, Math.min(COLS - 1, col));
+      }
+
+      canvas.addEventListener("pointermove", function (e) {
+        const col = getColFromEvent(e);
+        if (col !== hoverCol) {
+          hoverCol = col;
+          renderBoard();
+        }
+      });
+
+      canvas.addEventListener("pointerdown", function (e) {
+        if (e.button !== undefined && e.button !== 0) return;
+        if (isGameOver || isAiThinking || currentTurn !== HUMAN) return;
+        const col = getColFromEvent(e);
+        hoverCol = col;
+        if (getAvailableRow(board, col) === -1) {
+          showToast("该列已满，请选择其它列落子");
+          return;
+        }
+        dropDiscInColumn(col, HUMAN);
+      });
+
+      function requestGeminiHint() {
+        if (isGameOver || isAiThinking || currentTurn !== HUMAN) return;
+        const copyB = board.map(function (row) { return row.slice(); });
+        // 使用 high 档位为玩家快速计算最优推荐列
+        const res = computeGeminiBestMove(copyB, HUMAN, GEMINI_EFFORT_LEVELS[Math.max(2, currentEffortIdx)]);
+        if (res.col !== -1) {
+          hintCol = res.col;
+          updateTelemetryUI(res, HUMAN);
+          renderBoard();
+          showToast("💡 Gemini 推荐落子：第 " + (res.col + 1) + " 列 (C" + (res.col + 1) + ")");
+        }
+      }
+
+      function performUndo() {
+        if (isAiThinking || moveHistory.length === 0) return;
+        isGameOver = false;
+        winningLine = null;
+        hintCol = null;
+        fallingDiscs = [];
+        gameOverOverlay.classList.remove("is-visible");
+
+        // 撤回至上一个属于玩家的回合
+        if (moveHistory.length >= 2 && moveHistory[moveHistory.length - 1].player === AI) {
+          const mAi = moveHistory.pop();
+          board[mAi.r][mAi.c] = EMPTY;
+          const mHu = moveHistory.pop();
+          board[mHu.r][mHu.c] = EMPTY;
+        } else {
+          const m = moveHistory.pop();
+          board[m.r][m.c] = EMPTY;
+        }
+
+        currentTurn = HUMAN;
+        turnIndicatorEl.textContent = "🔵 轮到玩家";
+        aiStatePillEl.textContent = "READY";
+        updateHud(false);
+        renderBoard();
+        showToast("已悔棋退回上一回合");
+      }
+
+      function startNewGame() {
+        board = createEmptyBoard();
+        moveHistory = [];
+        fallingDiscs = [];
+        particles = [];
+        shockwaves = [];
+        winningLine = null;
+        hintCol = null;
+        isGameOver = false;
+        isAiThinking = false;
+        gameOverOverlay.classList.remove("is-visible");
+
+        currentTurn = humanGoesFirst ? HUMAN : AI;
+        teleNodesEl.textContent = "0";
+        teleTimeEl.textContent = "0 ms";
+        teleEvalEl.textContent = "+0.0";
+        teleEvalEl.style.color = "#0f172a";
+        winProbTextEl.textContent = "50% : 50%";
+        evalBarFillEl.style.width = "50%";
+        pvLineEl.textContent = "等待落子（点击 1~7 列或按数字键 1-7）";
+
+        updateHud(false);
+        renderBoard();
+
+        if (currentTurn === AI) {
+          scheduleAiTurn();
+        } else {
+          turnIndicatorEl.textContent = "🔵 轮到玩家";
+          aiStatePillEl.textContent = "READY";
+          aiStatePillEl.style.color = "#10b981";
+        }
+      }
+
+      firstTurnBtn.addEventListener("click", function () {
+        humanGoesFirst = !humanGoesFirst;
+        firstTurnBtn.textContent = humanGoesFirst ? "🔵 玩家先手" : "🟠 AI 先手";
+        startNewGame();
+        showToast(humanGoesFirst ? "已切换为：玩家先手" : "已切换为：Gemini AI 先手");
+      });
+
+      hintMoveBtn.addEventListener("click", requestGeminiHint);
+      undoMoveBtn.addEventListener("click", performUndo);
+      restartGameBtn.addEventListener("click", function () {
+        startNewGame();
+        showToast("已重新开始新对局");
+      });
+      overlayRestartBtn.addEventListener("click", startNewGame);
+
+      toggleSoundBtn.addEventListener("click", function () {
+        soundEnabled = !soundEnabled;
+        toggleSoundBtn.textContent = soundEnabled ? "🔊 音效" : "🔇 静音";
+      });
+
+      window.addEventListener("keydown", function (e) {
+        if (e.ctrlKey || e.altKey || e.metaKey) return;
+        const k = e.key;
+        if (k >= "1" && k <= "7") {
+          const col = Number(k) - 1;
+          if (!isGameOver && !isAiThinking && currentTurn === HUMAN) {
+            hoverCol = col;
+            dropDiscInColumn(col, HUMAN);
+          }
+        } else if (k === "h" || k === "H") {
+          requestGeminiHint();
+        } else if (k === "z" || k === "Z") {
+          performUndo();
+        } else if (k === "r" || k === "R") {
+          startNewGame();
+        } else if (k === "m" || k === "M") {
+          toggleSoundBtn.click();
+        }
+      });
+
+      /* ==========================================================================
+         按权重随机背景图与 Live2D 上半身放大 + 点击穿透与反馈共存
+         ========================================================================== */
+      const randomBgBtn = document.getElementById("randomBgBtn");
+      const currentBgLabel = document.getElementById("currentBgLabel");
+
+      function pickWeightedBackground(showMsg) {
+        const pool = (BLOG_CONFIG.backgrounds || []).filter(function (item) {
+          return item && item.url && Number(item.weight) > 0;
+        });
+        if (pool.length === 0) return;
+        const totalWeight = pool.reduce(function (sum, item) {
+          return sum + Number(item.weight);
+        }, 0);
+        let rand = Math.random() * totalWeight;
+        let chosen = pool[0];
+        for (let i = 0; i < pool.length; i++) {
+          rand -= Number(pool[i].weight);
+          if (rand <= 0) {
+            chosen = pool[i];
+            break;
+          }
+        }
+        document.documentElement.style.setProperty("--bg-image", 'url("' + chosen.url + '")');
+        if (currentBgLabel) currentBgLabel.textContent = chosen.name;
+        if (showMsg) showToast("已切换背景：「" + chosen.name + "」");
+      }
+
+      pickWeightedBackground(false);
+      if (randomBgBtn) {
+        randomBgBtn.addEventListener("click", function () {
+          pickWeightedBackground(true);
+        });
+      }
+
+      function applyUpperBodyLive2DLayout() {
+        const d = BLOG_CONFIG.live2d.display;
+        const stages = document.querySelectorAll("#oml2d-stage, #live2d-widget, .live2d-widget-container");
+        stages.forEach(function (stage) {
+          stage.style.setProperty("width", d.width + "px", "important");
+          stage.style.setProperty("height", d.boxHeight + "px", "important");
+          stage.style.setProperty("right", d.hOffset + "px", "important");
+          stage.style.setProperty("bottom", d.vOffset + "px", "important");
+          stage.style.setProperty("left", "auto", "important");
+          stage.style.setProperty("top", "auto", "important");
+          stage.style.setProperty("overflow", "visible", "important");
+          stage.style.setProperty("clip-path", "inset(-600px -300px 0px -300px)", "important");
+          stage.style.setProperty("pointer-events", "none", "important");
+          stage.style.setProperty("z-index", "90", "important");
+        });
+
+        const canvases = document.querySelectorAll("#oml2d-canvas, #live2dcanvas");
+        canvases.forEach(function (c) {
+          c.style.setProperty("transform-origin", "50% " + d.anchorY, "important");
+          c.style.setProperty("transform", "translate(" + d.shiftX + ", " + d.shiftY + ") scale(" + d.upperZoom + ")", "important");
+          c.style.setProperty("pointer-events", "none", "important");
+        });
+      }
+
+      function setupLive2DPassthroughForwarder() {
+        if (window.__l2dPassthroughBound) return;
+        window.__l2dPassthroughBound = true;
+
+        const forwardEventToLive2D = function (e) {
+          if (!e.isTrusted) return;
+          const canvasEl = document.querySelector("#oml2d-canvas, #live2dcanvas");
+          if (!canvasEl) return;
+
+          const rect = canvasEl.getBoundingClientRect();
+          if (rect.width <= 0 || rect.height <= 0) return;
+
+          const isMove = e.type === "pointermove" || e.type === "mousemove";
+          if (isMove) {
+            if (e.type === "mousemove" && typeof PointerEvent !== "undefined") return;
+            const nowTs = performance.now();
+            if (window.__l2dLastMoveTs && nowTs - window.__l2dLastMoveTs < 16) return;
+            window.__l2dLastMoveTs = nowTs;
+          }
+          const inside =
+            e.clientX >= rect.left &&
+            e.clientX <= rect.right &&
+            e.clientY >= rect.top &&
+            e.clientY <= rect.bottom;
+
+          if (!isMove && !inside) return;
+
+          if (typeof PointerEvent !== "undefined" && e.type.startsWith("pointer")) {
+            const cloned = new PointerEvent(e.type, {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              clientX: e.clientX,
+              clientY: e.clientY,
+              screenX: e.screenX,
+              screenY: e.screenY,
+              pointerId: e.pointerId || 1,
+              pointerType: e.pointerType || "mouse",
+              isPrimary: true,
+              button: e.button || 0,
+              buttons: e.buttons || (e.type === "pointerdown" ? 1 : 0)
+            });
+            canvasEl.dispatchEvent(cloned);
+          } else {
+            const cloned = new MouseEvent(e.type, {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              clientX: e.clientX,
+              clientY: e.clientY,
+              screenX: e.screenX,
+              screenY: e.screenY,
+              button: e.button || 0,
+              buttons: e.buttons || (e.type === "mousedown" ? 1 : 0)
+            });
+            canvasEl.dispatchEvent(cloned);
+          }
+        };
+
+        ["pointerdown", "pointermove", "pointerup", "mousedown", "mousemove", "mouseup", "click"].forEach(function (evtName) {
+          window.addEventListener(evtName, forwardEventToLive2D, { capture: true, passive: true });
+        });
+      }
+
+      function initLive2D() {
+        if (!BLOG_CONFIG.live2d || !BLOG_CONFIG.live2d.enabled) return;
+        const cfg = BLOG_CONFIG.live2d;
+        const script = document.createElement("script");
+        script.src = cfg.oml2dScriptUrl;
+        script.async = true;
+        script.onload = function () {
+          if (window.OML2D && typeof window.OML2D.loadOml2d === "function") {
+            window.OML2D.loadOml2d({
+              dockedPosition: "right",
+              mobileDisplay: false,
+              menus: { disable: true },
+              tips: { copyTips: { message: [] }, idleTips: { message: [] } },
+              statusBar: { disable: true },
+              models: [
+                {
+                  path: cfg.modelJsonUrl,
+                  position: [0, 0],
+                  scale: 0.11,
+                  stageStyle: {
+                    width: cfg.display.width,
+                    height: cfg.display.boxHeight
+                  }
+                }
+              ]
+            });
+            setupLive2DPassthroughForwarder();
+            setTimeout(applyUpperBodyLive2DLayout, 300);
+            setTimeout(applyUpperBodyLive2DLayout, 1000);
+            setTimeout(applyUpperBodyLive2DLayout, 2200);
+          }
+        };
+        document.body.appendChild(script);
+      }
+
+      loadSavedData();
+      setReasoningEffort(2, false);
+      startNewGame();
+      initLive2D();
+    })();
+  </script>
+</body>
+</html>
