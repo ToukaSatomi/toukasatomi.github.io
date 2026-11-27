@@ -16,6 +16,18 @@
         ]
       },
       {
+        "name": "Gravity_chess",
+        "path": "games/Gravity_chess",
+        "targetUrl": "./games/Gravity_chess/index.html",
+        "articleTitle": "重力四子棋",
+        "desc": "7×6毛玻璃重力四子棋人机对战，内置可拖动调节 Gemini 推理强度（low / medium / high / ultra）的博弈引擎",
+        "date": "2026-11-26",
+        "tags": [
+          "重力四子棋",
+          "人机博弈"
+        ]
+      },
+      {
         "name": "Sao_Lei",
         "path": "games/Sao_Lei",
         "targetUrl": "./games/Sao_Lei/index.html",
