@@ -1559,7 +1559,7 @@ body {
   content: "";
   position: absolute;
   top: -50%;
-  left: -120%;
+  left: 0;
   width: 65%;
   height: 200%;
   background: linear-gradient(
@@ -1568,14 +1568,15 @@ body {
     rgba(255, 255, 255, 0.36) 50%,
     rgba(255, 255, 255, 0) 100%
   );
-  transform: rotate(25deg);
+  transform: translate3d(-190%, 0, 0) rotate(25deg);
+  will-change: transform;
   animation: tileHoloSweep 2.8s infinite ease-in-out;
   pointer-events: none;
 }
 
 @keyframes tileHoloSweep {
-  0% { left: -120%; }
-  45%, 100% { left: 160%; }
+  0% { transform: translate3d(-190%, 0, 0) rotate(25deg); }
+  45%, 100% { transform: translate3d(260%, 0, 0) rotate(25deg); }
 }
 
 .hud-stat-value.is-bumping {
@@ -1804,4 +1805,278 @@ body {
   cursor: pointer;
   touch-action: none;
   box-shadow: inset 0 2px 8px rgba(15, 23, 42, 0.08), 0 8px 22px -6px rgba(15, 23, 42, 0.14);
+}
+/* 2048 高阶炫酷方块样式 (4096 ~ 131K) */
+.tile-2048[data-val="4096"] {
+  background: linear-gradient(135deg, #450a0a 0%, #b91c1c 48%, #f59e0b 100%);
+  color: #fef08a;
+  font-size: 1.2rem;
+  border: 1.5px solid rgba(253, 224, 71, 0.85);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.65), inset 0 0 12px rgba(254, 240, 138, 0.35);
+  text-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
+}
+
+.tile-2048[data-val="8192"] {
+  background: linear-gradient(135deg, #042f2e 0%, #0284c7 52%, #10b981 100%);
+  color: #ecfeff;
+  font-size: 1.2rem;
+  border: 1.5px solid rgba(56, 189, 248, 0.9);
+  box-shadow: 0 0 26px rgba(14, 165, 233, 0.72), 0 0 12px rgba(16, 185, 129, 0.6), inset 0 0 14px rgba(167, 243, 208, 0.32);
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.95);
+  
+}
+
+.tile-2048[data-val="16384"] {
+  background: linear-gradient(135deg, #1e1b4b 0%, #6d28d9 48%, #db2777 100%);
+  color: #fdf4ff;
+  font-size: 1.32rem;
+  letter-spacing: 0.02em;
+  border: 1.5px solid rgba(232, 121, 249, 0.92);
+  box-shadow: 0 0 28px rgba(192, 38, 211, 0.75), inset 0 0 16px rgba(244, 114, 182, 0.4);
+  text-shadow: 0 0 14px rgba(232, 121, 249, 0.95);
+}
+
+.tile-2048[data-val="32768"] {
+  background: linear-gradient(135deg, #0ea5e9 0%, #0f172a 48%, #f43f5e 100%);
+  color: #ffffff;
+  font-size: 1.32rem;
+  letter-spacing: 0.02em;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow: -5px 0 22px rgba(14, 165, 233, 0.75), 5px 0 22px rgba(244, 63, 94, 0.75), inset 0 0 14px rgba(255, 255, 255, 0.35);
+  text-shadow: -2px 0 10px rgba(56, 189, 248, 0.95), 2px 0 10px rgba(251, 113, 133, 0.95);
+  
+}
+
+.tile-2048[data-val="65536"] {
+  background: linear-gradient(125deg, #06b6d4, #3b82f6, #8b5cf6, #ec4899, #f59e0b, #10b981);
+  background-size: 320% 320%;
+  color: #ffffff;
+  font-size: 1.32rem;
+  letter-spacing: 0.02em;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 32px rgba(168, 85, 247, 0.8), 0 0 18px rgba(56, 189, 248, 0.7), inset 0 0 16px rgba(255, 255, 255, 0.5);
+  text-shadow: 0 2px 10px rgba(15, 23, 42, 0.85), 0 0 14px rgba(255, 255, 255, 0.9);
+  
+}
+
+.tile-2048[data-val="131072"] {
+  background: radial-gradient(circle at 50% 42%, #fef08a 0%, #f59e0b 20%, #7c3aed 52%, #020617 92%);
+  color: #ffffff;
+  font-size: 1.24rem;
+  letter-spacing: 0.02em;
+  border: 2px solid #fde047;
+  box-shadow: 0 0 34px rgba(250, 204, 21, 0.9), 0 0 54px rgba(168, 85, 247, 0.72), inset 0 0 18px rgba(254, 240, 138, 0.65);
+  text-shadow: 0 0 14px rgba(254, 240, 138, 1), 0 2px 8px rgba(15, 23, 42, 0.95);
+  
+}
+
+/* ==========================================================================
+   12. “重力四子棋” (connect_four.html) 专用一屏毛玻璃双栏与 Gemini 推理滑块样式
+   ========================================================================== */
+.glass-main-frame.game-c4-frame {
+  max-width: 920px;
+  padding: 15px 22px;
+}
+
+.c4-arena {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 262px;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.c4-side-panel {
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.gemini-effort-card {
+  padding: 11px 12px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px -4px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gemini-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.gemini-card-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #334155;
+  letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.gemini-effort-badge {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(37, 99, 235, 0.14);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.32);
+  transition: all 0.2s ease;
+}
+
+.gemini-slider-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.gemini-range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8 0%, #2563eb 33%, #8b5cf6 66%, #ec4899 100%);
+  outline: none;
+  cursor: pointer;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.18);
+}
+
+.gemini-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid var(--thumb-color, #2563eb);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+  cursor: grab;
+  transition: transform 0.15s ease, border-color 0.2s ease;
+}
+
+.gemini-range-input::-webkit-slider-thumb:hover {
+  transform: scale(1.14);
+}
+
+.gemini-range-input::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.06);
+}
+
+.gemini-stops-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.gemini-stop-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #64748b;
+  padding: 3px 2px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gemini-stop-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.gemini-stop-btn.is-active {
+  color: #0f172a;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+}
+
+.gemini-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.gemini-metric-box {
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gemini-metric-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.gemini-metric-val {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.c4-eval-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.c4-eval-bar-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f59e0b 0%, #e2e8f0 50%, #2563eb 100%);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.c4-eval-fill {
+  height: 100%;
+  width: 50%;
+  background: linear-gradient(90deg, #2563eb, #38bdf8);
+  transition: width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#c4Canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 16px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+@media (max-width: 720px) {
+  .c4-arena {
+    grid-template-columns: 1fr;
+  }
 }
